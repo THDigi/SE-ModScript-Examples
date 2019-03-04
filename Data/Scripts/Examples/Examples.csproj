@@ -118,6 +118,19 @@
     <None Include="Examples.ruleset" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BasicExample_GameLogicAndSession\Session.cs" />
+    <Compile Include="BasicExample_GameLogicAndSession\GameLogic.cs" />
+    <Compile Include="ExampleWorkaround_GridLogicHook.cs" />
+    <Compile Include="Example_DetectGunBlockFire.cs" />
+    <Compile Include="Example_EditCharacterDef.cs" />
+    <Compile Include="Example_ProtectionBlock\Block.cs" />
+    <Compile Include="Example_ShipGrinderSpeed.cs" />
+    <Compile Include="Example_NetworkProtobuf\PacketSimpleExample.cs" />
+    <Compile Include="Example_NetworkProtobuf\PacketBase.cs" />
+    <Compile Include="Example_NetworkProtobuf\Networking.cs" />
+    <Compile Include="Example_NetworkProtobuf\Session.cs" />
+    <Compile Include="Example_ProtectionBlock\Session.cs" />
+    <Compile Include="Example_SpinningSubpart.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
