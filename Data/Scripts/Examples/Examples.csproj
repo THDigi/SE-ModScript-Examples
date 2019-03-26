@@ -132,6 +132,7 @@
     <Compile Include="Example_NetworkProtobuf\Session.cs" />
     <Compile Include="Example_ProtectionBlock\Session.cs" />
     <Compile Include="Example_SpinningSubpart.cs" />
+    <Compile Include="MissileTurretProjectileSoundFix.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
