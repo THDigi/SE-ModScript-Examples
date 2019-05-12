@@ -11,18 +11,25 @@ namespace Digi.Example_NetworkProtobuf
     {
         public readonly ushort PacketId;
 
-        private readonly List<IMyPlayer> tempPlayers = new List<IMyPlayer>();
-
+        /// <summary>
+        /// <paramref name="packetId"/> must be unique from all other mods that also use packets.
+        /// </summary>
         public Networking(ushort packetId)
         {
             PacketId = packetId;
         }
 
+        /// <summary>
+        /// Register packet monitoring, not necessary if you don't want the local machine to handle incomming packets.
+        /// </summary>
         public void Register()
         {
             MyAPIGateway.Multiplayer.RegisterMessageHandler(PacketId, ReceivedPacket);
         }
 
+        /// <summary>
+        /// This must be called on world unload if you called <see cref="Register"/>.
+        /// </summary>
         public void Unregister()
         {
             MyAPIGateway.Multiplayer.UnregisterMessageHandler(PacketId, ReceivedPacket);
@@ -75,6 +82,8 @@ namespace Digi.Example_NetworkProtobuf
             MyAPIGateway.Multiplayer.SendMessageTo(PacketId, bytes, steamId);
         }
 
+        private List<IMyPlayer> tempPlayers;
+
         /// <summary>
         /// Sends packet (or supplied bytes) to all players except server player and supplied packet's sender.
         /// Only works server side.
@@ -84,10 +93,11 @@ namespace Digi.Example_NetworkProtobuf
             if(!MyAPIGateway.Multiplayer.IsServer)
                 return;
 
-            if(rawData == null)
-                rawData = MyAPIGateway.Utilities.SerializeToBinary(packet);
+            if(tempPlayers == null)
+                tempPlayers = new List<IMyPlayer>(MyAPIGateway.Session.SessionSettings.MaxPlayers);
+            else
+                tempPlayers.Clear();
 
-            tempPlayers.Clear();
             MyAPIGateway.Players.GetPlayers(tempPlayers);
 
             foreach(var p in tempPlayers)
@@ -97,6 +107,9 @@ namespace Digi.Example_NetworkProtobuf
 
                 if(p.SteamUserId == packet.SenderId)
                     continue;
+
+                if(rawData == null)
+                    rawData = MyAPIGateway.Utilities.SerializeToBinary(packet);
 
                 MyAPIGateway.Multiplayer.SendMessageTo(PacketId, rawData, p.SteamUserId);
             }
