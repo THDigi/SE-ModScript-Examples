@@ -53,6 +53,15 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\netstandard.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\protobuf-net.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Sandbox.Common">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\Sandbox.Common.dll</HintPath>
       <Private>False</Private>
@@ -73,7 +82,9 @@
       <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
+    <Reference Include="System">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="VRage">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.dll</HintPath>
       <Private>False</Private>
@@ -96,10 +107,6 @@
     </Reference>
     <Reference Include="VRage.Math">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Math.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="VRage.Native">
-      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Native.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="VRage.Render">
