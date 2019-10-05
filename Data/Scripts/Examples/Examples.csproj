@@ -58,8 +58,8 @@
       <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\netstandard.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="protobuf-net">
-      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\protobuf-net.dll</HintPath>
+    <Reference Include="ProtoBuf.Net.Core">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\ProtoBuf.Net.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Sandbox.Common">
