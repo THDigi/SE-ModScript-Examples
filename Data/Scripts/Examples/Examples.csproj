@@ -125,6 +125,11 @@
     <None Include="Examples.ruleset" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AttachedLights\AttachedLightsSession.cs" />
+    <Compile Include="AttachedLights\BlockLogic.cs" />
+    <Compile Include="AttachedLights\Setup.cs" />
+    <Compile Include="AttachedLights\SimpleLog.cs" />
+    <Compile Include="AttachedLights\Utils.cs" />
     <Compile Include="BasicExample_GameLogicAndSession\Session.cs" />
     <Compile Include="BasicExample_GameLogicAndSession\GameLogic.cs" />
     <Compile Include="ExampleWorkaround_GridLogicHook.cs" />
