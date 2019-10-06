@@ -63,7 +63,7 @@ namespace Digi.AttachedLights
             }
 
             if(lights == null)
-                SimpleLog.Error(this, $"{Block.BlockDefinition} has no dummies with '{AttachedLightsSession.DUMMY_PREFIX}' prefix!");
+                SimpleLog.Error(this, $"{Block.BlockDefinition.ToString()} has no dummies with '{AttachedLightsSession.DUMMY_PREFIX}' prefix!");
         }
 
         void CreateLight(string dummyName, Matrix dummyMatrix)

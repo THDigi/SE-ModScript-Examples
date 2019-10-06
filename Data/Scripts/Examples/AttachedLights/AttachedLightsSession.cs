@@ -21,7 +21,7 @@ namespace Digi.AttachedLights
         public Dictionary<string, LightConfigurator> ConfiguratorPerSubtype = null;
     }
 
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
+    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     public partial class AttachedLightsSession : MySessionComponentBase
     {
         public const string DUMMY_PREFIX = "customlight_";
@@ -51,6 +51,8 @@ namespace Digi.AttachedLights
                 TempDummies = new Dictionary<string, IMyModelDummy>();
 
                 MyAPIGateway.Entities.OnEntityAdd += EntitySpawned;
+
+                SetUpdateOrder(MyUpdateOrder.AfterSimulation);
 
                 Setup();
             }
@@ -109,7 +111,7 @@ namespace Digi.AttachedLights
                 {
                     if(blockHandling.ConfiguratorPerSubtype.ContainsKey(subtype))
                     {
-                        SimpleLog.Error(this, $"Subtype '{subtype}' for type {blockType} was already previously registered!");
+                        SimpleLog.Error(this, $"Subtype '{subtype}' for type {blockType.ToString()} was already previously registered!");
                         continue;
                     }
 
@@ -189,7 +191,7 @@ namespace Digi.AttachedLights
 
             if(block == null)
             {
-                SimpleLog.Error(this, $"{slimBlock.BlockDefinition.Id} has no fatblock?! buildRatio={slimBlock.BuildLevelRatio}; damageRatio={slimBlock.DamageRatio}");
+                SimpleLog.Error(this, $"{slimBlock.BlockDefinition.Id.ToString()} has no fatblock?! buildRatio={slimBlock.BuildLevelRatio.ToString()}; damageRatio={slimBlock.DamageRatio.ToString()}");
                 return;
             }
 
