@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Sandbox.Definitions;
+using Sandbox.Game.Entities;
 using Sandbox.Game.Lights;
 using Sandbox.ModAPI;
 using VRage.Game;
@@ -26,6 +27,7 @@ namespace Digi.AttachedLights
 
         private readonly LightConfigurator configurator;
         private Dictionary<string, MyLight> lights;
+        private bool scannedForDummies = false;
         private bool inViewRange = true;
         private float maxViewRangeSq;
 
@@ -36,9 +38,6 @@ namespace Digi.AttachedLights
             this.configurator = configurator;
 
             Block.IsWorkingChanged += WorkingChanged;
-
-            FindLightDummies();
-
             WorkingChanged(Block);
 
             if(maxViewRangeSq > 0)
@@ -47,9 +46,41 @@ namespace Digi.AttachedLights
 
         void FindLightDummies()
         {
+            if(scannedForDummies || !Block.IsFunctional)
+                return; // only scan once and only if block is functional (has its main model)
+
+            var def = (MyCubeBlockDefinition)Block.SlimBlock.BlockDefinition;
+            if(!def.Model.EndsWith(Block.Model.AssetName))
+            {
+                SimpleLog.Error(this, $"ERROR: block {Block.BlockDefinition.ToString()} is functional model is not the main one...\nBlock model='{Block.Model.AssetName}'\nDefinition model='{def.Model}'");
+                return;
+            }
+
+            scannedForDummies = true;
+
+            ScanDummiesForEntity(Block);
+
+            var internalBlock = (MyCubeBlock)Block;
+            foreach(var subpart in internalBlock.Subparts.Values)
+            {
+                ScanDummiesForEntity(subpart);
+            }
+
+            if(lights == null)
+            {
+                SimpleLog.Error(this, $"{Block.BlockDefinition.ToString()} has no dummies with '{AttachedLightsSession.DUMMY_PREFIX}' prefix!");
+            }
+            else
+            {
+                SetLights(Block.IsWorking);
+            }
+        }
+
+        void ScanDummiesForEntity(IMyEntity entity)
+        {
             var dummies = Session.TempDummies;
             dummies.Clear();
-            Block.Model.GetDummies(dummies);
+            entity.Model.GetDummies(dummies);
 
             foreach(var dummy in dummies.Values)
             {
@@ -58,15 +89,12 @@ namespace Digi.AttachedLights
                     if(lights == null)
                         lights = new Dictionary<string, MyLight>();
 
-                    CreateLight(dummy.Name, dummy.Matrix);
+                    CreateLight(entity, dummy.Name, dummy.Matrix);
                 }
             }
-
-            if(lights == null)
-                SimpleLog.Error(this, $"{Block.BlockDefinition.ToString()} has no dummies with '{AttachedLightsSession.DUMMY_PREFIX}' prefix!");
         }
 
-        void CreateLight(string dummyName, Matrix dummyMatrix)
+        void CreateLight(IMyEntity entity, string dummyName, Matrix dummyMatrix)
         {
             var light = MyLights.AddLight();
             light.Start(dummyName);
@@ -87,36 +115,59 @@ namespace Digi.AttachedLights
 
         public void Close()
         {
-            if(lights != null)
+            try
             {
-                foreach(var light in lights.Values)
+                if(lights != null)
                 {
-                    MyLights.RemoveLight(light);
-                }
+                    foreach(var light in lights.Values)
+                    {
+                        MyLights.RemoveLight(light);
+                    }
 
-                lights.Clear();
+                    lights.Clear();
+                }
+            }
+            catch(Exception e)
+            {
+                SimpleLog.Error(this, e);
             }
         }
 
         void WorkingChanged(IMyCubeBlock block)
         {
-            if(!inViewRange)
-                return;
+            try
+            {
+                if(!inViewRange)
+                    return;
 
-            SetLights(block.IsWorking);
+                Session.UpdateOnce.Add(this); // update next frame
+                SetLights(block.IsWorking);
+            }
+            catch(Exception e)
+            {
+                SimpleLog.Error(this, e);
+            }
+        }
+
+        public void UpdateOnce()
+        {
+            FindLightDummies();
         }
 
         void SetLights(bool on)
         {
-            foreach(var light in lights.Values)
+            if(lights != null)
             {
-                light.LightOn = on;
-                light.GlareOn = on;
+                foreach(var light in lights.Values)
+                {
+                    light.LightOn = on;
+                    light.GlareOn = on;
 
-                if(light.LightType == MyLightType.SPOTLIGHT)
-                    light.ReflectorOn = on;
+                    if(light.LightType == MyLightType.SPOTLIGHT)
+                        light.ReflectorOn = on;
 
-                light.UpdateLight();
+                    light.UpdateLight();
+                }
             }
         }
 

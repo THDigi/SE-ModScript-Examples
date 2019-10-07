@@ -29,6 +29,7 @@ namespace Digi.AttachedLights
 
         public static AttachedLightsSession Instance;
 
+        public List<BlockLogic> UpdateOnce;
         public Dictionary<long, Action<Vector3D>> ViewDistanceChecks;
         public Dictionary<string, IMyModelDummy> TempDummies;
 
@@ -44,6 +45,7 @@ namespace Digi.AttachedLights
                     return;
 
                 Instance = this;
+                UpdateOnce = new List<BlockLogic>();
                 monitorTypes = new Dictionary<MyObjectBuilderType, BlockHandling>();
                 blockLogics = new Dictionary<long, BlockLogic>();
                 ViewDistanceChecks = new Dictionary<long, Action<Vector3D>>();
@@ -145,9 +147,16 @@ namespace Digi.AttachedLights
 
         void GridClosed(IMyEntity ent)
         {
-            var grid = (IMyCubeGrid)ent;
-            grid.OnBlockAdded -= BlockAdded;
-            grid.OnClose -= GridClosed;
+            try
+            {
+                var grid = (IMyCubeGrid)ent;
+                grid.OnBlockAdded -= BlockAdded;
+                grid.OnClose -= GridClosed;
+            }
+            catch(Exception e)
+            {
+                SimpleLog.Error(this, e);
+            }
         }
 
         void BlockAdded(IMySlimBlock slimBlock)
@@ -229,6 +238,19 @@ namespace Digi.AttachedLights
                     {
                         action(cameraPos);
                     }
+                }
+
+                if(UpdateOnce.Count > 0)
+                {
+                    foreach(var logic in UpdateOnce)
+                    {
+                        if(logic.Block.MarkedForClose)
+                            continue;
+
+                        logic.UpdateOnce();
+                    }
+
+                    UpdateOnce.Clear();
                 }
             }
             catch(Exception e)
