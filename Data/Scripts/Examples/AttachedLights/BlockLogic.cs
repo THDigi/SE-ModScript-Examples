@@ -72,7 +72,8 @@ namespace Digi.AttachedLights
             }
             else
             {
-                SetLights(Block.IsWorking);
+                if(inViewRange)
+                    SetLights(Block.IsWorking);
             }
         }
 
