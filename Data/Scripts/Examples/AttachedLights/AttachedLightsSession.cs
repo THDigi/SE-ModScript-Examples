@@ -204,9 +204,14 @@ namespace Digi.AttachedLights
                 return;
             }
 
+            if(blockLogics.ContainsKey(block.EntityId))
+            {
+                BlockMarkedForClose(block);
+            }
+
             var logic = new BlockLogic(this, block, settings);
             block.OnMarkForClose += BlockMarkedForClose;
-            blockLogics.Add(block.EntityId, logic);
+            blockLogics[block.EntityId] = logic;
         }
 
         void BlockMarkedForClose(IMyEntity ent)
