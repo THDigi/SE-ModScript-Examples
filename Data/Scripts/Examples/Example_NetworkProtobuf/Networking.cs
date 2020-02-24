@@ -7,16 +7,29 @@ using VRage.Utils;
 
 namespace Digi.Example_NetworkProtobuf
 {
+    /// <summary>
+    /// Simple network communication example.
+    /// 
+    /// Always send to server as clients can't send to eachother directly.
+    /// Then decide in the packet if it should be relayed to everyone else (except sender and server of course).
+    /// 
+    /// Security note:
+    ///  SenderId is not reliable and can be altered by sender to claim they're someone else (like an admin).
+    ///  If you need senderId to be secure, a more complicated process is required involving sending
+    ///   every player a unique random ID and they sending that ID would confirm their identity.
+    /// </summary>
     public class Networking
     {
-        public readonly ushort PacketId;
+        public readonly ushort ChannelId;
+
+        private List<IMyPlayer> tempPlayers = null;
 
         /// <summary>
-        /// <paramref name="packetId"/> must be unique from all other mods that also use packets.
+        /// <paramref name="channelId"/> must be unique from all other mods that also use network packets.
         /// </summary>
-        public Networking(ushort packetId)
+        public Networking(ushort channelId)
         {
-            PacketId = packetId;
+            ChannelId = channelId;
         }
 
         /// <summary>
@@ -24,7 +37,7 @@ namespace Digi.Example_NetworkProtobuf
         /// </summary>
         public void Register()
         {
-            MyAPIGateway.Multiplayer.RegisterMessageHandler(PacketId, ReceivedPacket);
+            MyAPIGateway.Multiplayer.RegisterMessageHandler(ChannelId, ReceivedPacket);
         }
 
         /// <summary>
@@ -32,7 +45,7 @@ namespace Digi.Example_NetworkProtobuf
         /// </summary>
         public void Unregister()
         {
-            MyAPIGateway.Multiplayer.UnregisterMessageHandler(PacketId, ReceivedPacket);
+            MyAPIGateway.Multiplayer.UnregisterMessageHandler(ChannelId, ReceivedPacket);
         }
 
         private void ReceivedPacket(byte[] rawData) // executed when a packet is received on this machine
@@ -40,38 +53,51 @@ namespace Digi.Example_NetworkProtobuf
             try
             {
                 var packet = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase>(rawData);
-                var relay = packet.Received();
 
-                if(relay)
-                    RelayToClients(packet, rawData);
+                HandlePacket(packet, rawData);
             }
             catch(Exception e)
             {
+                // Handle packet receive errors however you prefer, this is with logging. Remove try-catch to allow it to crash the game.
+                // If another mod uses the same channel as your mod, this will throw errors being unable to deserialize their stuff.
+                // In that case, one of you must change the channelId and NOT ignoring the error as it can noticeably impact performance.
+
                 MyLog.Default.WriteLineAndConsole($"{e.Message}\n{e.StackTrace}");
 
                 if(MyAPIGateway.Session?.Player != null)
-                    MyAPIGateway.Utilities.ShowNotification($"[ ERROR: {GetType().FullName}: {e.Message} | Send SpaceEngineers.Log to mod author ]", 10000, MyFontEnum.Red);
+                    MyAPIGateway.Utilities.ShowNotification($"[ERROR: {GetType().FullName}: {e.Message} | Send SpaceEngineers.Log to mod author]", 10000, MyFontEnum.Red);
             }
+        }
+
+        private void HandlePacket(PacketBase packet, byte[] rawData = null)
+        {
+            var relay = packet.Received();
+
+            if(relay)
+                RelayToClients(packet, rawData);
         }
 
         /// <summary>
         /// Send a packet to the server.
         /// Works from clients and server.
         /// </summary>
-        /// <param name="packet"></param>
         public void SendToServer(PacketBase packet)
         {
+            if(MyAPIGateway.Multiplayer.IsServer)
+            {
+                HandlePacket(packet);
+                return;
+            }
+
             var bytes = MyAPIGateway.Utilities.SerializeToBinary(packet);
 
-            MyAPIGateway.Multiplayer.SendMessageToServer(PacketId, bytes);
+            MyAPIGateway.Multiplayer.SendMessageToServer(ChannelId, bytes);
         }
 
         /// <summary>
         /// Send a packet to a specific player.
         /// Only works server side.
         /// </summary>
-        /// <param name="packet"></param>
-        /// <param name="steamId"></param>
         public void SendToPlayer(PacketBase packet, ulong steamId)
         {
             if(!MyAPIGateway.Multiplayer.IsServer)
@@ -79,10 +105,8 @@ namespace Digi.Example_NetworkProtobuf
 
             var bytes = MyAPIGateway.Utilities.SerializeToBinary(packet);
 
-            MyAPIGateway.Multiplayer.SendMessageTo(PacketId, bytes, steamId);
+            MyAPIGateway.Multiplayer.SendMessageTo(ChannelId, bytes, steamId);
         }
-
-        private List<IMyPlayer> tempPlayers;
 
         /// <summary>
         /// Sends packet (or supplied bytes) to all players except server player and supplied packet's sender.
@@ -102,6 +126,9 @@ namespace Digi.Example_NetworkProtobuf
 
             foreach(var p in tempPlayers)
             {
+                if(p.IsBot)
+                    continue;
+
                 if(p.SteamUserId == MyAPIGateway.Multiplayer.ServerId)
                     continue;
 
@@ -111,7 +138,7 @@ namespace Digi.Example_NetworkProtobuf
                 if(rawData == null)
                     rawData = MyAPIGateway.Utilities.SerializeToBinary(packet);
 
-                MyAPIGateway.Multiplayer.SendMessageTo(PacketId, rawData, p.SteamUserId);
+                MyAPIGateway.Multiplayer.SendMessageTo(ChannelId, rawData, p.SteamUserId);
             }
 
             tempPlayers.Clear();
