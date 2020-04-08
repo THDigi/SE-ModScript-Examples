@@ -9,14 +9,14 @@ namespace Digi.Example_NetworkProtobuf
     [ProtoContract]
     public class PacketSimpleExample : PacketBase
     {
-        public PacketSimpleExample() { } // Empty constructor required for deserialization
-
         // tag numbers in this class won't collide with tag numbers from the base class
         [ProtoMember(1)]
         public string Text;
 
         [ProtoMember(2)]
         public int Number;
+
+        public PacketSimpleExample() { } // Empty constructor required for deserialization
 
         public PacketSimpleExample(string text, int number)
         {
