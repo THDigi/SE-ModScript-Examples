@@ -6,6 +6,7 @@ using Sandbox.Game.Lights;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
+using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
@@ -58,13 +59,7 @@ namespace Digi.AttachedLights
 
             scannedForDummies = true;
 
-            ScanDummiesForEntity(Block);
-
-            var internalBlock = (MyCubeBlock)Block;
-            foreach(var subpart in internalBlock.Subparts.Values)
-            {
-                ScanDummiesForEntity(subpart);
-            }
+            ScanSubparts(Block);
 
             if(lights == null)
             {
@@ -74,6 +69,17 @@ namespace Digi.AttachedLights
             {
                 if(inViewRange)
                     SetLights(Block.IsWorking);
+            }
+        }
+
+        void ScanSubparts(IMyEntity entity)
+        {
+            ScanDummiesForEntity(entity);
+
+            var internalEntity = (MyEntity)entity;
+            foreach(var subpart in internalEntity.Subparts.Values)
+            {
+                ScanSubparts(subpart);
             }
         }
 
