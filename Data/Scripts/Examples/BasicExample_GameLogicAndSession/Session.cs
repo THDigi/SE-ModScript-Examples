@@ -20,15 +20,16 @@ namespace Digi.Examples
         {
             // amogst the earliest execution points, but not everything is available at this point.
 
+            // main entry point: MyAPIGateway
+            // entry point for reading/editing definitions: MyDefinitionManager.Static
+            // these can be used anywhere as they're types not fields.
+
             Instance = this;
         }
 
         public override void BeforeStart()
         {
             // executed before the world starts updating
-
-            // Main entry point: MyAPIGateway
-            // Entry point for reading/editing definitions: MyDefinitionManager.Static
         }
 
         protected override void UnloadData()
