@@ -32,7 +32,10 @@ namespace Digi.Examples
                 Vector2 screenSize = Surface.SurfaceSize;
                 Vector2 screenCorner = (Surface.TextureSize - screenSize) * 0.5f;
 
-                var text = MySprite.CreateText("Hi!", "White", Surface.ScriptForegroundColor, 1f, TextAlignment.LEFT);
+                // Drawing sprites works exactly like in PB API.
+                // Therefore this guide applies: https://github.com/malware-dev/MDK-SE/wiki/Text-Panels-and-Drawing-Sprites
+
+                var text = MySprite.CreateText("Hi!", "Monospace", Surface.ScriptForegroundColor, 1f, TextAlignment.LEFT);
                 text.Position = screenCorner + new Vector2(16, 16); // 16px from topleft corner of the visible surface
                 frame.Add(text);
 
