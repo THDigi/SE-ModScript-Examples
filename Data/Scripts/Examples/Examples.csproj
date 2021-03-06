@@ -134,6 +134,7 @@
     <Compile Include="BasicExample_GameLogicAndSession\GameLogic.cs" />
     <Compile Include="ExampleWorkaround_GridLogicHook.cs" />
     <Compile Include="Example_DetectGunBlockFire.cs" />
+    <Compile Include="Example_TSS.cs" />
     <Compile Include="Example_EditBlockPowerUsage.cs" />
     <Compile Include="Example_EditCharacterDef.cs" />
     <Compile Include="Example_ProtectionBlock\Block.cs" />
