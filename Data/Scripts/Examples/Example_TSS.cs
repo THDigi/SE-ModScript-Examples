@@ -4,6 +4,7 @@ using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI;
+using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 
@@ -19,8 +20,13 @@ namespace Digi.Examples
     {
         public override ScriptUpdate NeedsUpdate => ScriptUpdate.Update10; // frequency that Run() is called.
 
+        private readonly IMyTerminalBlock TerminalBlock;
+
         public SomeClassName(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
+            TerminalBlock = (IMyTerminalBlock)block; // internal stored m_block is the ingame interface which has no events, so can't unhook later on, therefore this field is required.
+            TerminalBlock.OnMarkForClose += BlockMarkedForClose; // required if you're gonna make use of Dispose() as it won't get called when block is removed or grid is cut/unloaded.
+
             // Called when script is created.
             // This class is instanced per LCD that uses it, which means the same block can have multiple instances of this script aswell (e.g. a cockpit with all its screens set to use this script).
         }
@@ -28,8 +34,14 @@ namespace Digi.Examples
         public override void Dispose()
         {
             base.Dispose(); // do not remove
+            TerminalBlock.OnMarkForClose -= BlockMarkedForClose;
 
             // Called when script is removed for any reason, so that you can clean up stuff if you need to.
+        }
+
+        void BlockMarkedForClose(IMyEntity ent)
+        {
+            Dispose();
         }
 
         // gets called at the rate specified by NeedsUpdate
