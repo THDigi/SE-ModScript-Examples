@@ -42,23 +42,18 @@ namespace Digi.Examples
             // called when entity is about to be removed for whatever reason (block destroyed, entity deleted, ship despawn because of sync range, etc)
         }
 
-        public override void UpdateBeforeSimulation()
-        {
-            // executed 60 times a second after physics simulation, unless game is paused.
-            // triggered only if NeedsUpdate contains MyEntityUpdateEnum.EACH_FRAME.
-        }
-
         public override void UpdateAfterSimulation()
         {
-            // executed 60 times a second before physics simulation, unless game is paused.
-            // triggered only if NeedsUpdate contains MyEntityUpdateEnum.EACH_FRAME.
+            // executed 60 times a second after physics simulation, unless game is paused.
+            // there's also a before physics variant: UpdateBeforeSimulation()
+            // both triggered only if NeedsUpdate contains MyEntityUpdateEnum.EACH_FRAME.
         }
 
         public override void UpdateAfterSimulation100()
         {
             // executed approximately every 100 ticks (~1.66s), unless game is paused.
             // why approximately? Explained at the "Important information" in: https://forum.keenswh.com/threads/pb-scripting-guide-how-to-use-self-updating.7398267/
-            // there's also a 10-tick variant.
+            // there's also 10-tick variants, UpdateBeforeSimulation10() and UpdateAfterSimulation10()
             // triggered only if NeedsUpdate contains MyEntityUpdateEnum.EACH_100TH_FRAME, same for UpdateBeforeSimulation100().
         }
     }
