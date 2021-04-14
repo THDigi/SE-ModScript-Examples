@@ -12,7 +12,7 @@ using VRageMath;
 namespace Digi.Examples
 {
     // Edit the block type and subtypes to match your custom block.
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "YourSubtypeHere", "More if needed")]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Reactor), false, "YourSubtypeHere", "More if needed")]
     public class Example_SpinningSubpart : MyGameLogicComponent
     {
         private const string SUBPART_NAME = "thing"; // dummy name without the "subpart_" prefix
@@ -74,7 +74,7 @@ namespace Digi.Examples
                     if(subpartFirstFind) // first time the subpart was found
                     {
                         subpartFirstFind = false;
-                        subpartLocalMatrix = subpart.PositionComp.LocalMatrix;
+                        subpartLocalMatrix = subpart.PositionComp.LocalMatrixRef;
                     }
 
                     if(targetSpeedMultiplier > 0)
@@ -83,7 +83,7 @@ namespace Digi.Examples
                         subpartLocalMatrix = Matrix.Normalize(subpartLocalMatrix); // normalize to avoid any rotation inaccuracies over time resulting in weird scaling
                     }
 
-                    subpart.PositionComp.LocalMatrix = subpartLocalMatrix;
+                    subpart.PositionComp.SetLocalMatrix(ref subpartLocalMatrix);
                 }
             }
             catch(Exception e)
@@ -94,7 +94,7 @@ namespace Digi.Examples
 
         private void AddToLog(Exception e)
         {
-            MyLog.Default.WriteLineAndConsole($"{e.Message}\n{e.StackTrace}");
+            MyLog.Default.WriteLineAndConsole($"ERROR {GetType().FullName}: {e.ToString()}");
 
             if(MyAPIGateway.Session?.Player != null)
                 MyAPIGateway.Utilities.ShowNotification($"[ ERROR: {GetType().FullName}: {e.Message} | Send SpaceEngineers.Log to mod author ]", 10000, MyFontEnum.Red);
