@@ -7,6 +7,7 @@ using VRage.ObjectBuilders;
 namespace Digi.Examples
 {
     // This object gets attached to entities depending on their type and optionally subtype aswell.
+    // NOTE: The typeof(MyObjectBuilder_BatteryBlock) represents the <TypeId>BatteryBlock</TypeId> from the SBC, never use the OBs that end with "Definition".
     // The 2nd arg, "false", is for entity-attached update if set to true which is not recommended, see for more info: https://forum.keenswh.com/threads/modapi-changes-jan-26.7392280/
     // Remove any method that you don't need, they're only there to show what you can use, and also remove comments you've read as they're only for example purposes and don't make sense in a final mod.
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_BatteryBlock), false, "SubTypeIdHere", "more if needed...")]

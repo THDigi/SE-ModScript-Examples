@@ -12,6 +12,7 @@ using VRageMath;
 namespace Digi.Examples
 {
     // Edit the block type and subtypes to match your custom block.
+    // For type always use the same name as the <TypeId> and append "MyObjectBuilder_" to it, don't use the one from xsi:type.
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Reactor), false, "YourSubtypeHere", "More if needed")]
     public class Example_SpinningSubpart : MyGameLogicComponent
     {
