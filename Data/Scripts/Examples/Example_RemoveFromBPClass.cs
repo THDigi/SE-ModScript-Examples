@@ -10,11 +10,11 @@ namespace Digi.Examples
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     public class Example_RemoveFromBPClass : MySessionComponentBase
     {
-        List<MyBlueprintDefinitionBase> newBlueprints = new List<MyBlueprintDefinitionBase>();
+        List<MyBlueprintDefinitionBase> NewBlueprints = new List<MyBlueprintDefinitionBase>();
 
         public override void LoadData()
         {
-            RemoveBlueprintsFromBlueprintClass("bpClassSubtype", new List<string>()
+            RemoveBlueprintsFromBlueprintClass("bpClassSubtype", new HashSet<string>()
             {
                 "blueprintSubtype",
                 // more like the above line if needed
@@ -26,16 +26,16 @@ namespace Digi.Examples
 
             // these must always be last
             PostProcessProductionBlocks(); // required to make production blocks aware of the blueprint changes, to adjust their inventory constraints and whatever else
-            newBlueprints = null;
+            NewBlueprints = null;
         }
 
-        void RemoveBlueprintsFromBlueprintClass(string bpClassName, List<string> removeBlueprintIds)
+        void RemoveBlueprintsFromBlueprintClass(string bpClassName, HashSet<string> removeBlueprintIds)
         {
             MyBlueprintClassDefinition bpClass = MyDefinitionManager.Static.GetBlueprintClass(bpClassName);
             if(bpClass == null)
                 throw new Exception($"{ModContext.ModName} :: ERROR: Cannot find blueprint class '{bpClassName}'");
 
-            newBlueprints.Clear();
+            NewBlueprints.Clear();
 
             int bpCount = 0;
 
@@ -46,10 +46,10 @@ namespace Digi.Examples
                 if(removeBlueprintIds.Contains(bp.Id.SubtypeName))
                     MyLog.Default.WriteLine($"{ModContext.ModName} :: Removed {bp.Id.SubtypeName} from blueprint class '{bpClassName}'");
                 else
-                    newBlueprints.Add(bp);
+                    NewBlueprints.Add(bp);
             }
 
-            if(newBlueprints.Count == bpCount)
+            if(NewBlueprints.Count == bpCount)
             {
                 MyLog.Default.WriteLine($"{ModContext.ModName} :: WARNING: Blueprint class '{bpClassName}' does not contain any of these blueprints: {string.Join(", ", removeBlueprintIds)}");
                 return;
@@ -57,7 +57,7 @@ namespace Digi.Examples
 
             bpClass.ClearBlueprints();
 
-            foreach(MyBlueprintDefinitionBase bp in newBlueprints)
+            foreach(MyBlueprintDefinitionBase bp in NewBlueprints)
             {
                 bpClass.AddBlueprint(bp);
             }
