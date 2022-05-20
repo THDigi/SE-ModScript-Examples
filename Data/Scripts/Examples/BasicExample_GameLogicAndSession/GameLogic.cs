@@ -8,7 +8,9 @@ namespace Digi.Examples
 {
     // This object gets attached to entities depending on their type and optionally subtype aswell.
     // NOTE: The typeof(MyObjectBuilder_BatteryBlock) represents the <TypeId>BatteryBlock</TypeId> from the SBC, never use the OBs that end with "Definition".
+    //
     // The 2nd arg, "false", is for entity-attached update if set to true which is not recommended, see for more info: https://forum.keenswh.com/threads/modapi-changes-jan-26.7392280/
+    //
     // Remove any method that you don't need, they're only there to show what you can use, and also remove comments you've read as they're only for example purposes and don't make sense in a final mod.
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_BatteryBlock), false, "SubTypeIdHere", "more if needed...")]
     public class Example_GameLogic : MyGameLogicComponent
@@ -17,8 +19,9 @@ namespace Digi.Examples
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            // this method is called async! always do stuff in the first update unless you're sure it must be in this one.
-            // NOTE the objectBuilder arg is not the Entity's but the component's, and since the component wasn't loaded from an OB that means it's always null, which it is (AFAIK).
+            // this method is called async! always do stuff in the first update unless you're sure it must be in this one (like initializing resource sink/source components would need to be here)
+
+            // the objectBuilder arg is sometimes the serialized version of the entity, it works for hand tools for example but not for blocks (probably because MyObjectBuilder_CubeBlock does not extend MyObjectBuilder_EntityBase)
 
             block = (IMyCubeBlock)Entity;
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME; // allow UpdateOnceBeforeFrame() to execute, remove if not needed
