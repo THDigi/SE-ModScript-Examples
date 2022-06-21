@@ -1,5 +1,7 @@
-﻿# Examples
-A collection of SE mod script examples and ready-to-use code libraries.
+﻿﻿# Examples
+A collection of SE mod script examples and some ready-to-use code libraries.
+
+I recommend to start from [Quick Intro to Space Engineers Modding](https://github.com/THDigi/SE-ModScript-Examples/wiki/Quick-Intro-to-Space-Engineers-Modding) which is in the Wiki tab with other guides aswell.
 
 Feel free to use'em in your mods or whatever.
 
