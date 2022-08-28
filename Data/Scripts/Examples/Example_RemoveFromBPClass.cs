@@ -11,6 +11,7 @@ namespace Digi.Examples
     public class Example_RemoveFromBPClass : MySessionComponentBase
     {
         List<MyBlueprintDefinitionBase> NewBlueprints = new List<MyBlueprintDefinitionBase>();
+        HashSet<MyBlueprintClassDefinition> ModifiedBpClasses = new HashSet<MyBlueprintClassDefinition>();
 
         public override void LoadData()
         {
@@ -24,9 +25,7 @@ namespace Digi.Examples
 
 
 
-            // these must always be last
-            PostProcessProductionBlocks(); // required to make production blocks aware of the blueprint changes, to adjust their inventory constraints and whatever else
-            NewBlueprints = null;
+            Finish(); // this must always be last
         }
 
         void RemoveBlueprintsFromBlueprintClass(string bpClassName, HashSet<string> removeBlueprintIds)
@@ -61,6 +60,15 @@ namespace Digi.Examples
             {
                 bpClass.AddBlueprint(bp);
             }
+
+            ModifiedBpClasses.Add(bpClass);
+        }
+
+        void Finish()
+        {
+            PostProcessProductionBlocks(); // required to make production blocks aware of the blueprint changes, to adjust their inventory constraints and whatever else
+            NewBlueprints = null;
+            ModifiedBpClasses = null;
         }
 
         void PostProcessProductionBlocks()
@@ -68,9 +76,17 @@ namespace Digi.Examples
             foreach(MyDefinitionBase def in MyDefinitionManager.Static.GetAllDefinitions())
             {
                 MyProductionBlockDefinition productionDef = def as MyProductionBlockDefinition;
-                if(productionDef != null)
+                if(productionDef == null)
+                    continue;
+
+                // only post-process if it has one of the affected classes to reduce disruption of other mod's changes
+                foreach(MyBlueprintClassDefinition bpClass in productionDef.BlueprintClasses)
                 {
-                    productionDef.LoadPostProcess();
+                    if(ModifiedBpClasses.Contains(bpClass))
+                    {
+                        productionDef.LoadPostProcess();
+                        break; // exit bpclass loop. the all definition loop is unaffected
+                    }
                 }
             }
         }
