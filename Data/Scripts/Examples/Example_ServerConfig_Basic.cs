@@ -89,6 +89,8 @@ namespace Digi.Examples
                 }
             }
 
+            iniParser.Clear(); // remove any existing settings that might no longer exist
+
             SaveConfig(iniParser);
 
             string saveText = iniParser.ToString();
