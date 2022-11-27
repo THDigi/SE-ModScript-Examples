@@ -27,36 +27,33 @@ namespace Digi.Examples
 
             // dividing it up into methods for different levels/usecases of examples:
 
-            BasicExamples();
-
-            GamepadInclusiveExamples();
-        }
-
-
-
-
-        void BasicExamples()
-        {
-            // these input methods will work regardless of GUI focus, this is the simplest way to ignore if player is in any menu or chat.
+            // all input methods will read regardless of being in menus or having chat open.
+            // these checks are the simplest way to ignore those menu & chat states.
             if(!MyAPIGateway.Gui.IsCursorVisible && !MyAPIGateway.Gui.ChatEntryVisible)
             {
-                // example of detecting when current player presses the USE bind on keyboard or mouse, does not react to gamepad binds.
-                if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.USE))
-                {
-                    MyAPIGateway.Utilities.ShowNotification("You pressed USE [:o]");
-                }
-                // also the "New" in the method names means it will only return true in the frame that it started to be pressed (or released).
-                //   useful for a single action instead of it repeating while player holds it (which they will even as they tap it, it is inevitable).
+                BasicExamples();
 
-                if(MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.JUMP))
-                {
-                    MyAPIGateway.Utilities.ShowNotification("You're holding jump...", 17);
-                }
+                GamepadInclusiveExamples();
             }
         }
 
 
 
+        void BasicExamples()
+        {
+            // example of detecting when current player presses the USE bind on keyboard or mouse, does not react to gamepad binds.
+            if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.USE))
+            {
+                MyAPIGateway.Utilities.ShowNotification("You pressed USE [:o]");
+            }
+            // also the "New" in the method names means it will only return true in the frame that it started to be pressed (or released).
+            //   useful for a single action instead of it repeating while player holds it (which they will even as they tap it, it is inevitable).
+
+            if(MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.JUMP))
+            {
+                MyAPIGateway.Utilities.ShowNotification("You're holding jump...", 17);
+            }
+        }
 
 
         // copied from MyControllerHelper because it is not whitelisted
