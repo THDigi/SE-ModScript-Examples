@@ -130,5 +130,12 @@ namespace Digi.Examples
 
             // only called when game is paused.
         }
+
+
+        // WARNING: OnAddedToScene() and OnRemovedFromScene() never trigger if the block has more than one gamelogic comp.
+        //   I advise against using these to avoid surprises down the line.
+        //
+        // Reason is Entity.GameLogic turns into a MyCompositeGameLogicComponent which holds an inner list of the actual gamelogic components,
+        //   but it does not override those 2 methods to pass their call along to the held components.
     }
 }
