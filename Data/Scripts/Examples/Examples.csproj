@@ -13,7 +13,7 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <IntermediateOutputPath>..\..\..\Ignored\obj\$(Configuration)\</IntermediateOutputPath>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
@@ -24,16 +24,16 @@
     <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Ignored\bin\Debug\</OutputPath>
     <DebugSymbols>True</DebugSymbols>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\..\Ignored\obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\Ignored\bin\Release\</OutputPath>
     <DebugSymbols>False</DebugSymbols>
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
@@ -85,6 +85,11 @@
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\System.Collections.Immutable.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="VRage">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.dll</HintPath>
       <Private>False</Private>
@@ -132,21 +137,55 @@
     <Compile Include="AttachedLights\Utils.cs" />
     <Compile Include="BasicExample_GameLogicAndSession\Session.cs" />
     <Compile Include="BasicExample_GameLogicAndSession\GameLogic.cs" />
+    <Compile Include="Debug_ShowShotPositions.cs" />
     <Compile Include="ExampleWorkaround_GridLogicHook.cs" />
+    <Compile Include="Example_ModifyProjectileExplosion.cs" />
+    <Compile Include="Example_ModifyWarheadExplosion.cs" />
+    <Compile Include="Example_PreventBlockDamageOnCharacters.cs" />
+    <Compile Include="Example_HighlightingEntities.cs" />
+    <Compile Include="Example_MessageOnJoin.cs" />
+    <Compile Include="Example_InputReading.cs" />
+    <Compile Include="Example_GasOutput.cs" />
+    <Compile Include="Example_ModifyBlockVariants.cs" />
+    <Compile Include="Example_ModifyContainerTypes.cs" />
+    <Compile Include="Example_SurvivalKitDisableRespawn.cs" />
+    <Compile Include="Example_UpgradeModuleSupport.cs" />
+    <Compile Include="Example_AppendToCharacterStatComp.cs" />
+    <Compile Include="Example_RemoveCategory.cs" />
+    <Compile Include="Example_RemoveFromBPClass.cs" />
+    <Compile Include="Example_ServerConfig_Basic.cs" />
     <Compile Include="Example_DetectGunBlockFire.cs" />
+    <Compile Include="Example_HudStatOverride.cs" />
+    <Compile Include="Example_ShipDrillHarvestMultiplier.cs" />
+    <Compile Include="Example_DrawingIn3D.cs" />
+    <Compile Include="Example_CustomUseObject.cs" />
+    <Compile Include="Example_AssemblerForceMode.cs" />
     <Compile Include="Example_TSS.cs" />
     <Compile Include="Example_EditBlockPowerUsage.cs" />
     <Compile Include="Example_EditCharacterDef.cs" />
     <Compile Include="Example_ProtectionBlock\Block.cs" />
     <Compile Include="Example_ShipGrinderSpeed.cs" />
-    <Compile Include="Example_NetworkProtobuf\PacketSimpleExample.cs" />
-    <Compile Include="Example_NetworkProtobuf\PacketBase.cs" />
-    <Compile Include="Example_NetworkProtobuf\Networking.cs" />
-    <Compile Include="Example_NetworkProtobuf\Session.cs" />
     <Compile Include="Example_ProtectionBlock\Session.cs" />
     <Compile Include="Example_SpinningSubpart.cs" />
+    <Compile Include="TerminalControls\Events\TerminalEventsExamples.cs" />
+    <Compile Include="TerminalControls\Hiding\TerminalChainedDelegate.cs" />
+    <Compile Include="TerminalControls\Hiding\HideControlsExample.cs" />
+    <Compile Include="TerminalControls\Hiding\SensorLogic.cs" />
+    <Compile Include="TerminalControls\Adding\GyroTerminalControls.cs" />
+    <Compile Include="MissileParticleReplacer\MissileParticleReplacer.cs" />
     <Compile Include="MissileTurretProjectileSoundFix\MissileTurretProjectileSoundFix.cs" />
+    <Compile Include="ParticleAtDummy\Conditions.cs" />
+    <Compile Include="ParticleAtDummy\Gamelogic.cs" />
+    <Compile Include="ParticleAtDummy\Setup.cs" />
     <Compile Include="RealisticHoloSight\RealisticHoloSight.cs" />
+    <Compile Include="TerminalControls\Adding\GyroLogic.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ParticleAtDummy\Readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Example_NetworkProtobuf\" />
+    <Folder Include="TerminalHelpers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
