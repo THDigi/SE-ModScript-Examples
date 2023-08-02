@@ -7,7 +7,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Examples</RootNamespace>
     <AssemblyName>Examples</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
@@ -137,8 +137,11 @@
     <Compile Include="AttachedLights\Utils.cs" />
     <Compile Include="BasicExample_GameLogicAndSession\Session.cs" />
     <Compile Include="BasicExample_GameLogicAndSession\GameLogic.cs" />
+    <Compile Include="Debug_DrawSolarBlocks.cs" />
     <Compile Include="Debug_ShowShotPositions.cs" />
     <Compile Include="ExampleWorkaround_GridLogicHook.cs" />
+    <Compile Include="Example_TargetDummyFixSlider.cs" />
+    <Compile Include="Example_WriteToDetailedInfo.cs" />
     <Compile Include="Example_ModifyProjectileExplosion.cs" />
     <Compile Include="Example_ModifyWarheadExplosion.cs" />
     <Compile Include="Example_PreventBlockDamageOnCharacters.cs" />
