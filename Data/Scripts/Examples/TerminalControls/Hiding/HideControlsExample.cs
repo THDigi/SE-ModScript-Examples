@@ -11,7 +11,7 @@ namespace Digi.Examples.TerminalControls.Hiding
     //   For example another mod could have the same on largegrid sensor to hide a different control, or even the same control, it would work properly.
 
 
-    // Refer to /TerminalControls/TerminalControls.cs for why it's done like this
+    // For important notes about terminal controls see: https://github.com/THDigi/SE-ModScript-Examples/blob/master/Data/Scripts/Examples/TerminalControls/Adding/GyroTerminalControls.cs#L21-L35
     public static class HideControlsExample
     {
         static bool Done = false;

@@ -286,10 +286,10 @@ namespace Digi.Examples.TerminalControls.Adding
 
         static void CreateProperties()
         {
-            // terminal controls automatically generate properties like these, but you can also add new ones manually without the GUI counterpart.
+            // Terminal controls automatically generate properties like these, but you can also add new ones manually without the GUI counterpart.
             // The main use case is for PB to be able to read them.
             // The type given is only limited by access, can only do SE or .NET types, nothing custom (except methods because the wrapper Func/Action is .NET).
-            // For APIs, one cand send a IReadOnlyDictionary<string, Delegate> for a list of callbacks. Just be sure to use a ImmutableDictionary to avoid getting your API hijacked.
+            // For APIs, one can send a IReadOnlyDictionary<string, Delegate> for a list of callbacks. Just be sure to use a ImmutableDictionary to avoid getting your API hijacked.
             {
                 var p = MyAPIGateway.TerminalControls.CreateProperty<Vector3, IMyGyro>(IdPrefix + "SampleProp");
                 // SupportsMultipleBlocks, Enabled and Visible don't have a use for this, and Title/Tooltip don't exist.
