@@ -40,62 +40,24 @@ namespace Digi.Examples.TerminalControls.Adding
 
         static bool Done = false;
 
+        // just to clarify, don't store your states/values here, those should be per block and not static.
+
         public static void DoOnce(IMyModContext context) // called by GyroLogic.cs
         {
             if(Done)
                 return;
             Done = true;
 
-            CreateActions(context); // the modcontext is for accessing mod's full path, to be used in action icon example.
+            // these are all the options and they're not all required so use only what you need.
             CreateControls();
+            CreateActions(context);
             CreateProperties();
         }
 
-        static void CreateActions(IMyModContext context)
+        static bool CustomVisibleCondition(IMyTerminalBlock b)
         {
-            // yes, there's only one type of action
-            {
-                var a = MyAPIGateway.TerminalControls.CreateAction<IMyGyro>(IdPrefix + "SampleAction");
-
-                a.Name = new StringBuilder("Sample Action");
-
-                // If the action is visible for grouped blocks (as long as they all have this action).
-                a.ValidForGroups = true;
-
-                // The icon shown in the list and top-right of the block icon in toolbar.
-                a.Icon = @"Textures\GUI\Icons\Actions\CharacterToggle.dds";
-                // For paths inside the mod folder you need to supply an absolute path which can be retrieved from a session or gamelogic comp's ModContext.
-                //a.Icon = Path.Combine(context.ModPath, @"Textures\YourIcon.dds");
-
-                // Called when the toolbar slot is triggered
-                // Should not be unassigned.
-                a.Action = (b) => { };
-
-                // The status of the action, shown in toolbar icon text and can also be read by mods or PBs.
-                a.Writer = (b, sb) =>
-                {
-                    sb.Append("Hi\nthere");
-                };
-
-                // What toolbar types to NOT allow this action for.
-                // Can be left unassigned to allow all toolbar types.
-                // The below are the options used by jumpdrive's Jump action as an example.
-                //a.InvalidToolbarTypes = new List<MyToolbarType>()
-                //{
-                //    MyToolbarType.ButtonPanel,
-                //    MyToolbarType.Character,
-                //    MyToolbarType.Seat
-                //};
-                // PB checks if it's valid for ButtonPanel before allowing the action to be invoked.
-
-                // Wether the action is to be visible for the given block instance.
-                // Can be left unassigned as it defaults to true.
-                // Warning: gets called per tick while in toolbar for each block there, including each block in groups.
-                //   It also can be called by mods or PBs.
-                a.Enabled = CustomVisibleCondition;
-
-                MyAPIGateway.TerminalControls.AddAction<IMyGyro>(a);
-            }
+            // only visible for the blocks having this gamelogic comp
+            return b?.GameLogic?.GetAs<GyroLogic>() != null;
         }
 
         static void CreateControls()
@@ -278,10 +240,51 @@ namespace Digi.Examples.TerminalControls.Adding
             }
         }
 
-        static bool CustomVisibleCondition(IMyTerminalBlock b)
+        static void CreateActions(IMyModContext context)
         {
-            // only visible for the blocks having this gamelogic comp
-            return b?.GameLogic?.GetAs<GyroLogic>() != null;
+            // yes, there's only one type of action
+            {
+                var a = MyAPIGateway.TerminalControls.CreateAction<IMyGyro>(IdPrefix + "SampleAction");
+
+                a.Name = new StringBuilder("Sample Action");
+
+                // If the action is visible for grouped blocks (as long as they all have this action).
+                a.ValidForGroups = true;
+
+                // The icon shown in the list and top-right of the block icon in toolbar.
+                a.Icon = @"Textures\GUI\Icons\Actions\CharacterToggle.dds";
+                // For paths inside the mod folder you need to supply an absolute path which can be retrieved from a session or gamelogic comp's ModContext.
+                //a.Icon = Path.Combine(context.ModPath, @"Textures\YourIcon.dds");
+
+                // Called when the toolbar slot is triggered
+                // Should not be unassigned.
+                a.Action = (b) => { };
+
+                // The status of the action, shown in toolbar icon text and can also be read by mods or PBs.
+                a.Writer = (b, sb) =>
+                {
+                    sb.Append("Hi\nthere");
+                };
+
+                // What toolbar types to NOT allow this action for.
+                // Can be left unassigned to allow all toolbar types.
+                // The below are the options used by jumpdrive's Jump action as an example.
+                //a.InvalidToolbarTypes = new List<MyToolbarType>()
+                //{
+                //    MyToolbarType.ButtonPanel,
+                //    MyToolbarType.Character,
+                //    MyToolbarType.Seat
+                //};
+                // PB checks if it's valid for ButtonPanel before allowing the action to be invoked.
+
+                // Wether the action is to be visible for the given block instance.
+                // Can be left unassigned as it defaults to true.
+                // Warning: gets called per tick while in toolbar for each block there, including each block in groups.
+                //   It also can be called by mods or PBs.
+                a.Enabled = CustomVisibleCondition;
+
+                MyAPIGateway.TerminalControls.AddAction<IMyGyro>(a);
+            }
         }
 
         static void CreateProperties()

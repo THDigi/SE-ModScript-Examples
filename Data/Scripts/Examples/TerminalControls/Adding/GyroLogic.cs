@@ -28,6 +28,12 @@ namespace Digi.Examples.TerminalControls.Adding
             // stuff and things
         }
 
+        // these are going to be set or retrieved by the terminal controls (as seen in the terminal control's Getter and Setter).
+
+        // as mentioned in the other .cs file, the terminal stuff are only GUI.
+        // if you want the values to persist over world reloads and be sent to clients you'll need to implement that yourself.
+        // see: https://github.com/THDigi/SE-ModScript-Examples/wiki/Save-&-Sync-ways
+
         public bool Terminal_ExampleToggle
         {
             get
