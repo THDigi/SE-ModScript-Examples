@@ -15,6 +15,9 @@ using CollisionLayers = Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace Digi.Examples
 {
+    // NOTE: No longer needed! Ammo definition has <MissileTrailEffect> now.
+    // Left this code up for reference.
+
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     public class MissileParticleReplacer : MySessionComponentBase
     {
