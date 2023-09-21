@@ -5,7 +5,7 @@ using Sandbox.ModAPI.Interfaces.Terminal;
 namespace Digi.Examples.TerminalControls.Hiding
 {
     // In this example we're hiding the "Detect asteroids" terminal control and terminal action. Also bonus, enforcing it to stay false.
-    //  All this only on smallgrid sensor to show to to properly do that.
+    //  All this only on a specific sensor block to show doing it properly without breaking other mods trying to do the same.
     //
     // This is also compatible with multiple mods doing the same thing on the same type, but for different subtypes.
     //   For example another mod could have the same on largegrid sensor to hide a different control, or even the same control, it would work properly.
@@ -27,9 +27,9 @@ namespace Digi.Examples.TerminalControls.Hiding
             EditActions();
         }
 
-        static bool CustomVisibleCheck(IMyTerminalBlock block)
+        static bool AppendedCondition(IMyTerminalBlock block)
         {
-            // if block has this component then return false to hide the control/action.
+            // if block has this gamelogic component then return false to hide the control/action.
             return block?.GameLogic?.GetAs<SensorLogic>() == null;
         }
 
@@ -47,8 +47,8 @@ namespace Digi.Examples.TerminalControls.Hiding
                         // appends a custom condition after the original condition with an AND.
 
                         // pick which way you want it to work:
-                        c.Enabled = TerminalChainedDelegate.Create(c.Enabled, CustomVisibleCheck); // grays out
-                        //c.Visible = TerminalChainedDelegate.Create(c.Visible, CustomVisibleCheck); // hides
+                        c.Enabled = TerminalChainedDelegate.Create(c.Enabled, AppendedCondition); // grays out
+                        //c.Visible = TerminalChainedDelegate.Create(c.Visible, AppendedCondition); // hides
                         break;
                     }
                 }
@@ -70,7 +70,7 @@ namespace Digi.Examples.TerminalControls.Hiding
                     {
                         // appends a custom condition after the original condition with an AND.
 
-                        a.Enabled = TerminalChainedDelegate.Create(a.Enabled, CustomVisibleCheck);
+                        a.Enabled = TerminalChainedDelegate.Create(a.Enabled, AppendedCondition);
                         // action.Enabled hides it, there is no grayed-out for actions.
 
                         break;
