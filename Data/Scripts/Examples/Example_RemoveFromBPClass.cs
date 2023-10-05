@@ -7,6 +7,9 @@ using VRage.Utils;
 
 namespace Digi.Examples
 {
+    // NOTE: not really necessary as a script anymore, it can be done with SBC!
+    // see: https://github.com/THDigi/SE-ModScript-Examples/wiki/Hidden-SBC-tags-features#remove-blueprints-from-bpclass
+
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     public class Example_RemoveFromBPClass : MySessionComponentBase
     {
