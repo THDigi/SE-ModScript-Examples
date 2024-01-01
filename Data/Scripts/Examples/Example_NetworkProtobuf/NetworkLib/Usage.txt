@@ -1,0 +1,46 @@
+﻿Network library for handling packets easier.
+
+Working example: https://github.com/THDigi/SE-ModScript-Examples/tree/master/Data/Scripts/Examples/Example_NetworkProtobuf
+
+
+Alternate setup instructions:
+
+1. Do not edit anything in the library folder, only copy it to your mod.
+
+2. Create an instance of Network and give it the channel ID for your mod (must be unique to your mod).
+
+3. In UnloadData() call Dispose() on the network instance.
+
+4. Create packets by extending PacketBase, it will ask you what to override.
+
+5. To register packets, create a "public abstract partial class PacketBase" in "Digi.NetworkLib" namespace but placed in your mod files.
+Next give it ProtoInclude attributes with tags starting from 10 and the types of your packets.
+
+Example:
+
+namespace Digi.NetworkLib
+{
+    [ProtoInclude(10, typeof(PacketPaint))]
+    [ProtoInclude(11, typeof(PacketReplacePaint))]
+
+    [ProtoInclude(20, typeof(PacketPaletteUpdate))]
+    [ProtoInclude(21, typeof(PacketPaletteSetColor))]
+    [ProtoInclude(22, typeof(PacketJoinSharePalette))]
+
+    [ProtoInclude(30, typeof(PacketToolSpraying))]
+
+    [ProtoInclude(250, typeof(PacketOwnershipTestRequest))]
+    [ProtoInclude(251, typeof(PacketOwnershipTestResults))]
+    public abstract partial class PacketBase
+    {
+		    // you can also add helper properties to be accessible in your packets
+        protected PaintGunMod Main => PaintGunMod.Instance;
+        protected Network Network => Main.NetworkLibHandler.Lib;
+    }
+}
+
+6. Recommended but not required: Create an instance of every packet and store them as fields.
+NOTE: do not instance them in the fields, they call MyAPIGateway.Multiplayer.MyId which is not available at that point.
+
+7. Recommended but not required: Declare static events in the packet to shift the handling outside of the packet.
+

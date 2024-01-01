@@ -1,36 +1,43 @@
-﻿using ProtoBuf;
-using Sandbox.ModAPI;
-using VRage.Utils;
+﻿using Digi.NetworkLib;
+using ProtoBuf;
 
-namespace Digi.Example_NetworkProtobuf
+namespace Digi.Examples.NetworkProtobuf
 {
-    // An example packet extending another packet.
-    // Note that it must be ProtoIncluded in PacketBase for it to work.
+    // An example packet with a string and a number.
+    // Note that it must be ProtoIncluded in RegisterPackets.cs!
     [ProtoContract]
     public class PacketSimpleExample : PacketBase
     {
-        // tag numbers in this class won't collide with tag numbers from the base class
+        public PacketSimpleExample() { } // Empty constructor required for deserialization
+
+        // Each field has to have a unique ProtoMember number.
+        //   And ideally don't change its type after mod is released, instead give it a new number and comment out the old one.
+
+        // A protomember's value will only be sent if it's not the default value, which saves on bandwidth.
+        //   WARNING: default value is not being sent and protobuf can't tell between default or null.
+        //   Therefore to keep it simple, do not give fields any predetermined value.
+        //   If you must have an, for example, integer with a defalut value, use nullable and use that value if it's null.
+
         [ProtoMember(1)]
         public string Text;
 
         [ProtoMember(2)]
         public int Number;
 
-        public PacketSimpleExample() { } // Empty constructor required for deserialization
-
-        public PacketSimpleExample(string text, int number)
+        public void Setup(string text, int number)
         {
+            // Ensure you assign ALL the protomember fields here to avoid problems.
             Text = text;
             Number = number;
         }
 
-        public override bool Received()
-        {
-            var msg = $"PacketSimpleExample received: Text='{Text}'; Number={Number}";
-            MyLog.Default.WriteLineAndConsole(msg);
-            MyAPIGateway.Utilities.ShowNotification(msg, Number);
+        // Alternative way of handling the data elsewhere.
+        // Or you can handle it in the Received() method below and remove this event, up to you.
+        public static event ReceiveDelegate<PacketSimpleExample> OnReceive;
 
-            return true; // relay packet to other clients (only works if server receives it)
+        public override void Received(ref PacketInfo packetInfo, ulong senderSteamId)
+        {
+            OnReceive?.Invoke(this, ref packetInfo, senderSteamId);
         }
     }
 }
