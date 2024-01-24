@@ -14,20 +14,10 @@ namespace Digi.Examples.TerminalControls.Hiding
     //   For example another mod could have the same on largegrid sensor to hide a different control, or even the same control, it would work properly.
 
 
-    // You will need the internal IDs for the terminal properties and/or actions you wish to edit.
-    //
-    // For vanilla ones, pick one way:
-    // - Use the commented-out code I left in the Edit*() methods below.
-    // - Use the MDK wiki that is usually up-to-date: https://github.com/malware-dev/MDK-SE/wiki/List-Of-Terminal-Properties-and-Actions
-    // - With a decompiler go to the block's class and find CreateTerminalControls()
-    //
-    // For ones added by other mods, pick one way:
-    // - Use the commented-out code I left in the Edit*() methods below.
-    // - Check the mod's workshop page if they happen to list them there
-    // - In your mod, use block.GetProperties()/GetActions() on a block and dump'em to log
-    // - With your mod code, hook the CustomControlGetter or CustomActionGetter events and dump all the stuff to log, then open terminal or rightclick that block in a toolbar GUI to trigger it
-    // - Open the mod's downloaded folder (by searching its workshopid in the steam folder) and dive through its .cs files to find where they're declaring them
-
+    // You will need the internal IDs for the terminal properties and/or actions you wish to edit, pick one:
+    // - Use the commented-out code I left in the Edit*() methods below and run the game, it will write to SE's log.
+    // - For vanilla: With a decompiler go to the block's class and find CreateTerminalControls().
+    // - For mods: Open the mod's downloaded folder (by searching its workshopid in the steam folder) and dive through its .cs files to find where they're declaring them.
 
     // For important notes about terminal controls see: https://github.com/THDigi/SE-ModScript-Examples/blob/master/Data/Scripts/Examples/TerminalControls/Adding/GyroTerminalControls.cs#L21-L35
     public static class HideControlsExample
@@ -60,7 +50,7 @@ namespace Digi.Examples.TerminalControls.Hiding
 
             foreach(IMyTerminalControl c in controls)
             {
-                // a quick way to dump all IDs to log
+                // a quick way to dump all IDs to SE's log
                 //string name = MyTexts.GetString((c as IMyTerminalControlTitleTooltip)?.Title.String ?? "N/A");
                 //string valueType = (c as ITerminalProperty)?.TypeName ?? "N/A";
                 //MyLog.Default.WriteLine($"[DEV] terminal property: id='{c.Id}'; type='{c.GetType().Name}'; valueType='{valueType}'; displayName='{name}'");
@@ -89,7 +79,7 @@ namespace Digi.Examples.TerminalControls.Hiding
 
             foreach(IMyTerminalAction a in actions)
             {
-                // a quick way to dump all IDs to log 
+                // a quick way to dump all IDs to SE's log 
                 //MyLog.Default.WriteLine($"[DEV] toolbar action: id='{a.Id}'; displayName='{a.Name}'");
 
                 switch(a.Id)
