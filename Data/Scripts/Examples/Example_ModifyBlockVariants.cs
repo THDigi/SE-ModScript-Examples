@@ -15,8 +15,16 @@ namespace Digi.Experiments
         // if you expect blocks or groups to be missing then set this to false to not report them in log.
         const bool ReportMissingDefinitions = true;
 
+        const bool ReportInF11Menu = true;
+
         void SetupGroups()
         {
+            // A few notes about groups:
+            // - group has to exist with SBC, C# mods cannot add definitions in general.
+            // - has to have at least one valid block or game will remove the group.
+            // - blocks can only link to a single group, ideally don't use blocks that are already in a group.
+
+
             // usage example:
 
             using(var group = new GroupChange("CockpitGroup"))
@@ -56,6 +64,7 @@ namespace Digi.Experiments
                 RemoveBlocks = null;
                 NewDefs = null;
                 Instance = null;
+                SB = null;
             }
         }
 
@@ -119,9 +128,27 @@ namespace Digi.Experiments
                 foreach(MyCubeBlockDefinition blockDef in group.Blocks)
                 {
                     if(Instance.RemoveBlocks.Contains(blockDef.Id))
+                    {
+                        Instance.RemoveBlocks.Remove(blockDef.Id);
+
+                        // detach block from group properly
+                        blockDef.BlockStages = null;
+                        blockDef.BlockVariantsGroup = null;
+                        blockDef.GuiVisible = true; // this was assigned by the group so we have to reset it
+
                         continue;
+                    }
 
                     Instance.NewDefs.Add(blockDef);
+                }
+
+                if(Instance.RemoveBlocks.Count > 0)
+                {
+                    foreach(MyDefinitionId blockId in Instance.RemoveBlocks)
+                    {
+                        if(ReportMissingDefinitions)
+                            LogError($"Cannot find block id to remove: `{blockId}`");
+                    }
                 }
 
                 foreach(MyDefinitionId blockId in Instance.AppendBlocks)
@@ -130,7 +157,7 @@ namespace Digi.Experiments
                     if(blockDef == null)
                     {
                         if(ReportMissingDefinitions)
-                            LogError($"Cannot find block id: `{blockId}`");
+                            LogError($"Cannot find block id to add: `{blockId}`");
 
                         continue;
                     }
@@ -146,28 +173,40 @@ namespace Digi.Experiments
                 group.Icons = null;
                 group.Postprocess();
 
-                StringBuilder sb = Instance.SB.Clear().Append("Modified block variants group '").Append(group.Id.SubtypeName).Append("', final blocks:");
-                foreach(MyCubeBlockDefinition block in group.Blocks)
+                // not handled by Postprocess() but by MyDefinitionManager.InitBlockGroups()
+                foreach(MyCubeBlockDefinition blockDef in group.Blocks)
                 {
-                    sb.Append("\n  ").Append(block.Id.ToString());
+                    blockDef.BlockVariantsGroup = group;
+                }
 
-                    if(block == group.PrimaryGUIBlock)
+                StringBuilder sb = Instance.SB.Clear().Append("Modified block variants group '").Append(group.Id.SubtypeName).Append("', final blocks:");
+                foreach(MyCubeBlockDefinition blockDef in group.Blocks)
+                {
+                    sb.Append("\n  ").Append(blockDef.Id.ToString());
+
+                    if(blockDef == group.PrimaryGUIBlock)
                         sb.Append("   (Primary GUI block)");
                 }
                 LogInfo(sb.ToString());
 
-                Instance.AppendBlocks?.Clear();
-                Instance.RemoveBlocks?.Clear();
+                Instance.AppendBlocks.Clear();
+                Instance.RemoveBlocks.Clear();
             }
         }
 
         static void LogError(string message)
         {
-            MyLog.Default.WriteLineAndConsole($"Mod '{Instance.ModContext.ModName}' Error: {message}");
+            if(ReportInF11Menu)
+                MyDefinitionErrors.Add((MyModContext)Instance.ModContext, message, TErrorSeverity.Error, writeToLog: true);
+            else
+                MyLog.Default.WriteLineAndConsole($"Mod '{Instance.ModContext.ModName}' Error: {message}");
         }
 
         static void LogInfo(string message)
         {
+            //if(ReportInF11Menu)
+            //    MyDefinitionErrors.Add((MyModContext)Instance.ModContext, message, TErrorSeverity.Notice, writeToLog: true);
+            //else
             MyLog.Default.WriteLineAndConsole($"Mod '{Instance.ModContext.ModName}': {message}");
         }
     }
