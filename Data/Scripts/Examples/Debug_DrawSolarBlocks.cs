@@ -8,23 +8,29 @@ using SpaceEngineers.Game.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
+using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using VRageRender;
+using static VRageRender.MyBillboard;
 
 namespace Digi.Experiments
 {
-    // for development/debugging purposes only
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
-    public class Debug_DrawSolarBlocks : MySessionComponentBase
-    {
-        MyStringId MaterialLaser = MyStringId.GetOrCompute("WeaponLaser");
+    // NOTE: The new <Pivots> has Z flipped
 
-        List<IMyTerminalBlock> SolarBlocks = new List<IMyTerminalBlock>();
+    // for development/debugging purposes only!
+    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
+    public class Debug_DrawSolarPanelRays : MySessionComponentBase
+    {
+        static readonly MyStringId MaterialDot = MyStringId.GetOrCompute("WhiteDot");
+        static readonly MyStringId MaterialSquare = MyStringId.GetOrCompute("Square");
+
+        List<IMyTerminalBlock> Blocks = new List<IMyTerminalBlock>();
+        List<Vector3> TempPivots = new List<Vector3>(8);
 
         public override void LoadData()
         {
-            // using this instead of gamelogic because solars panels and oxy farms override the gamelogic breaking any mod trying to add to that.
+            // using this instead of gamelogic because solar panels and oxy farms override the gamelogic breaking any mod trying to add to that.
             MyEntities.OnEntityCreate += EntityCreated;
         }
 
@@ -37,7 +43,9 @@ namespace Digi.Experiments
         {
             if(ent is IMySolarPanel || ent is IMyOxygenFarm)
             {
-                SolarBlocks.Add((IMyTerminalBlock)ent);
+                var tb = (IMyTerminalBlock)ent;
+                if(!Blocks.Contains(tb))
+                    Blocks.Add(tb);
             }
         }
 
@@ -45,25 +53,26 @@ namespace Digi.Experiments
         {
             try
             {
-                foreach(IMyTerminalBlock block in SolarBlocks)
+                for(int i = (Blocks.Count - 1); i >= 0; i--)
                 {
-                    MyCubeBlockDefinition def = (MyCubeBlockDefinition)block.SlimBlock.BlockDefinition;
+                    IMyTerminalBlock block = Blocks[i];
+
+                    if(block.MarkedForClose)
+                    {
+                        Blocks.RemoveAtFast(i);
+                        continue;
+                    }
 
                     {
-                        MySolarPanelDefinition solarPanelDef = def as MySolarPanelDefinition;
-                        if(solarPanelDef != null)
-                        {
-                            DrawSolarBlock(block, def, solarPanelDef.PanelOrientation, solarPanelDef.IsTwoSided, solarPanelDef.PanelOffset);
-                            continue;
-                        }
+                        var def = block.SlimBlock.BlockDefinition as MySolarPanelDefinition;
+                        if(def != null)
+                            DrawRays(block, def.Size, def.IsTwoSided, def.PanelOrientation, def.PanelOffset, def.Pivots);
                     }
+
                     {
-                        MyOxygenFarmDefinition oxyFarmDef = def as MyOxygenFarmDefinition;
-                        if(oxyFarmDef != null)
-                        {
-                            DrawSolarBlock(block, def, oxyFarmDef.PanelOrientation, oxyFarmDef.IsTwoSided, oxyFarmDef.PanelOffset);
-                            continue;
-                        }
+                        var def = block.SlimBlock.BlockDefinition as MyOxygenFarmDefinition;
+                        if(def != null)
+                            DrawRays(block, def.Size, def.IsTwoSided, def.PanelOrientation, def.PanelOffset);
                     }
                 }
             }
@@ -76,66 +85,150 @@ namespace Digi.Experiments
             }
         }
 
-        // cloned from MySolarGameLogicComponent.ComputeSunAngle()
-        // if MySolarGameLogicComponent were whitelisted we could just read DebugIsPivotInSun instead.
-        void DrawSolarBlock(IMyTerminalBlock block, MyCubeBlockDefinition def, Vector3 panelOrientation, bool isTwoSided, float panelOffset)
+        // logic from MySolarGameLogicComponent
+        void DrawRays(IMyTerminalBlock block, Vector3I size, bool isTwoSided, Vector3 panelOrientation, float panelOffset, Vector3[] positions = null)
         {
             Vector3 directionToSun = MyVisualScriptLogicProvider.GetSunDirection();
+            Color color;
 
-            const float LineThick = 0.05f;
-            const MyBillboard.BlendTypeEnum LineBlend = MyBillboard.BlendTypeEnum.SDR;
-            Color color = Color.White;
+            MyCubeGrid grid = (MyCubeGrid)block.CubeGrid;
 
-            //float angleToSun = Vector3.Dot(Vector3.Transform(panelOrientation, block.WorldMatrix.GetOrientation()), directionToSun);
-            //if((angleToSun < 0f && !isTwoSided) || !block.IsFunctional)
-            //{
-            //    color = Color.Red;
-            //}
-            //else if(IsOnDarkSide(block.WorldMatrix.Translation))
-            //{
-            //    color = Color.Red;
-            //}
-            //else
-            //{
-            //    color = Color.Lime;
-            //}
+            MatrixD worldMatrix = block.WorldMatrix;
+            Vector3 panelOrientationWorld = Vector3.TransformNormal(panelOrientation, worldMatrix);
 
-            MatrixD orientation = block.WorldMatrix.GetOrientation();
-            float scale = (float)block.WorldMatrix.Forward.Dot(Vector3.Transform(panelOrientation, orientation));
+            // HACK: oxygen farm doesn't implement IMySolarOccludable (also this interface is not whitelisteD)
+            if(block is IMySolarPanel && grid.IsSolarOccluded)
+            {
+                color = Color.Yellow;
+            }
+            else
+            {
+                float angleToSun = Vector3.Dot(panelOrientationWorld, directionToSun);
+                if((angleToSun < 0f && !isTwoSided) || !block.IsFunctional)
+                {
+                    color = Color.Red;
+                }
+                else if(IsOnDarkSide(worldMatrix.Translation))
+                {
+                    color = Color.Gray;
+                }
+                else
+                {
+                    color = Color.Lime;
+                }
+            }
+
+            float scale = (float)worldMatrix.Forward.Dot(panelOrientationWorld);
             float unit = block.CubeGrid.GridSize;
 
-            for(int idx = 0; idx < 8; idx++)
+            if(positions != null) // from MyNewSolarGameLogicComponent
             {
-                Vector3D pos = block.WorldMatrix.Translation;
-                pos += ((idx % 4) - 1.5f) * unit * scale * (def.Size.X / 4f) * block.WorldMatrix.Left;
-                pos += ((idx / 4) - 0.5f) * unit * scale * (def.Size.Y / 2f) * block.WorldMatrix.Up;
-                pos += unit * scale * (def.Size.Z / 2f) * Vector3.Transform(panelOrientation, orientation) * panelOffset;
+                TempPivots.Clear();
+                for(int i = 0; i < positions.Length; i++)
+                {
+                    TempPivots.Add(positions[i] * unit);
+                }
 
-                Vector3D from = pos + directionToSun * 100f;
-                Vector3D to = pos + directionToSun * unit / 4f;
+                int pivotsCount = isTwoSided ? TempPivots.Count / 2 : TempPivots.Count;
 
-                MyTransparentGeometry.AddLineBillboard(MaterialLaser, color, from, (to - from), 1f, LineThick, LineBlend);
+                for(int i = 0; i < pivotsCount; i++)
+                {
+                    int idx = i * (isTwoSided ? 2 : 1);
+                    Vector3D point = worldMatrix.Translation;
+                    point += worldMatrix.Right * TempPivots[idx].X;
+                    point += worldMatrix.Up * TempPivots[idx].Y;
+                    point += worldMatrix.Forward * TempPivots[idx].Z;
+
+                    MyTransparentGeometry.AddPointBillboard(MaterialDot, Color.Blue, point, 0.1f, 0, blendType: BlendTypeEnum.AdditiveTop);
+
+                    if(isTwoSided)
+                    {
+                        Vector3D point2 = worldMatrix.Translation;
+                        point2 += worldMatrix.Right * TempPivots[idx + 1].X;
+                        point2 += worldMatrix.Up * TempPivots[idx + 1].Y;
+                        point2 += worldMatrix.Forward * TempPivots[idx + 1].Z;
+
+                        MyTransparentGeometry.AddPointBillboard(MaterialDot, Color.Red, point2, 0.075f, 0, blendType: BlendTypeEnum.AdditiveTop);
+
+                        Vector3D test = worldMatrix.Translation + directionToSun * 100f;
+
+                        if((point2 - test).LengthSquared() < (point - test).LengthSquared())
+                        {
+                            point = point2;
+                        }
+                    }
+
+                    // HACK: game flips them when inputting to raycast, I'm flipping them early to be less confusing down the line
+                    Vector3D from = point;
+                    Vector3D to = point + directionToSun * 100f;
+
+                    CastRay(from, to, color, block);
+                }
+            }
+            else
+            {
+                for(int idx = 0; idx < 8; idx++)
+                {
+                    Vector3D pos = block.WorldMatrix.Translation;
+                    pos += ((idx % 4) - 1.5f) * unit * scale * (size.X / 4f) * block.WorldMatrix.Left;
+                    pos += ((idx / 4) - 0.5f) * unit * scale * (size.Y / 2f) * block.WorldMatrix.Up;
+                    pos += unit * scale * (size.Z / 2f) * panelOrientationWorld * panelOffset;
+
+                    // HACK: game flips them when inputting to raycast, I'm flipping them early to be less confusing down the line
+                    Vector3D from = pos + directionToSun * unit / 4f;
+                    Vector3D to = pos + directionToSun * 100f;
+
+                    MyTransparentGeometry.AddPointBillboard(MaterialDot, Color.Yellow, from, 0.1f, 0, blendType: BlendTypeEnum.AdditiveTop);
+
+                    CastRay(from, to, color, block);
+                }
             }
         }
 
+        void CastRay(Vector3D from, Vector3D to, Color color, IMyTerminalBlock block)
+        {
+            MyTransparentGeometry.AddLineBillboard(MaterialSquare, color, from, (to - from), 1f, 0.03f, BlendTypeEnum.AdditiveTop);
+
+            var hits = new List<IHitInfo>(16);
+            MyAPIGateway.Physics.CastRayParallel(ref from, ref to, hits, 15, (list) => OnRayCastCompleted(hits, from, to, color, block));
+        }
+
+        void OnRayCastCompleted(List<IHitInfo> hits, Vector3D from, Vector3D to, Color color, IMyTerminalBlock block)
+        {
+            bool inSun = true;
+
+            foreach(IHitInfo hit in hits)
+            {
+                IMyEntity hitEntity = hit.HitEntity;
+                if(hitEntity != block.CubeGrid)
+                {
+                    to = hit.Position;
+                    inSun = false;
+                    break;
+                }
+
+                MyCubeGrid grid = hitEntity as MyCubeGrid;
+                Vector3I? gridPos = grid.RayCastBlocks(from, to);
+                if(gridPos.HasValue && grid.GetCubeBlock(gridPos.Value) != block.SlimBlock)
+                {
+                    to = hit.Position;
+                    inSun = false;
+                    break;
+                }
+            }
+
+            if(!inSun)
+                MyTransparentGeometry.AddLineBillboard(MaterialSquare, Color.Red, from, (to - from), 1f, 0.06f, BlendTypeEnum.AdditiveTop);
+        }
+
         // from MySectorWeatherComponent
-        //public static bool IsOnDarkSide(Vector3D point)
-        //{
-        //    MyPlanet closestPlanet = MyGamePruningStructure.GetClosestPlanet(point);
-        //    if(closestPlanet == null)
-        //        return false;
-        //
-        //    return IsThereNight(closestPlanet, ref point);
-        //}
-        //
-        //public static bool IsThereNight(MyPlanet planet, ref Vector3D position)
-        //{
-        //    Vector3D value = position - planet.PositionComp.GetPosition();
-        //    if((float)value.Length() > planet.MaximumRadius * 1.1f)
-        //        return false;
-        //
-        //    Vector3 vector = Vector3.Normalize(value);
-        //    return Vector3.Dot(MyVisualScriptLogicProvider.GetSunDirection(), vector) < -0.1f;
-        //}
+        public static bool IsOnDarkSide(Vector3D point)
+        {
+            MyPlanet closestPlanet = MyGamePruningStructure.GetClosestPlanet(point);
+            if(closestPlanet == null)
+                return false;
+
+            return MyVisualScriptLogicProvider.IsOnDarkSide(closestPlanet, point);
+        }
     }
 }
