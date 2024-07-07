@@ -39,6 +39,8 @@ namespace Digi.NetworkLib
         readonly string ModName;
         readonly List<IMyPlayer> TempPlayers;
 
+        static bool AlreadyInstanced = false;
+
         /// <summary>
         /// Create only one instance of this in session component's LoadData() for example (not in fields) and also call <see cref="Dispose"/> in UnloadData().
         /// </summary>
@@ -55,6 +57,14 @@ namespace Digi.NetworkLib
                 CrashAfterLoad($"{ModName}: The {nameof(Network)} constructor was called too early, earliest valid spot is in LoadData().");
                 return;
             }
+
+            if(AlreadyInstanced)
+            {
+                CrashAfterLoad($"{ModName}: The {nameof(Network)} was instanced more than once, if you're doing this in gamelogic then don't, do it in session component.");
+                return;
+            }
+
+            AlreadyInstanced = true;
 
             if(registerListener)
                 MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(ChannelId, ReceivedPacket);

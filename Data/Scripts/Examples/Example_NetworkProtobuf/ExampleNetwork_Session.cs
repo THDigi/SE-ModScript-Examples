@@ -63,7 +63,7 @@ namespace Digi.Examples.NetworkProtobuf
             {
                 PacketExample.Setup("L was pressed", MyRandom.Instance.Next());
 
-                MyAPIGateway.Utilities.ShowNotification($"Sent: text={PacketExample.Text}; number={PacketExample.Number}");
+                MyAPIGateway.Utilities.ShowNotification($"[Example] Sent: text={PacketExample.Text}; number={PacketExample.Number}");
 
                 Net.SendToServer(PacketExample);
                 // always send to server even if you are server, from there you can decide in the receive method if you want to relay it to other players.
