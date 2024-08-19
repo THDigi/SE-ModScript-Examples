@@ -14,22 +14,23 @@ namespace Digi.NetworkLib
 
         /// <summary>
         /// Callback for errors in the receive packet event.<br />
-        /// Default/null will log to SE log, DS console and client HUD.<br />
+        /// If null (default), it will write to SE log, DS console or client HUD (whichever is applicable).<br />
         /// NOTE: Another mod using the same channelId will cause exceptions that are not either of your faults, not recommended to crash nor to ignore the error, just let players find collisions and work it out with the other author(s).
         /// </summary>
-        public Action<Exception> CustomExceptionHandler;
+        public Action<Exception> ExceptionHandler;
 
         /// <summary>
-        /// Additional callback when exceptions occurs on <see cref="ReceivedPacket(ushort, byte[], ulong, bool)"/>.<br />
-        /// Default/null will append the steamid and bytes to the exception given to <see cref="CustomExceptionHandler"/>.
+        /// Additional callback when exceptions occurs on <see cref="ReceivedPacket(ushort, byte[], ulong, bool)"/> specifically.<br />
+        /// Note that the <see cref="ExceptionHandler"/> is also invoked before this.
+        /// If null (default), it will write to SE log the sender name and steamid, as well as a byte dump of the packet.
         /// </summary>
-        public Action<ulong, byte[]> ReceiveExceptionHandler;
+        public Action<ulong, IMyPlayer, byte[]> ReceiveExceptionHandler;
 
         /// <summary>
         /// Callback for custom text errors.<br />
-        /// Default/null will log to SE log, DS console and client HUD.
+        /// If null (default), it will write to SE log, DS console or client HUD (whichever is applicable).
         /// </summary>
-        public Action<string> CustomErrorHandler;
+        public Action<string> ErrorHandler;
 
         /// <summary>
         /// To test serialization&deserialization along with messaging API while in singleplayer, set this to true.
@@ -163,23 +164,28 @@ namespace Digi.NetworkLib
             }
             catch(Exception e)
             {
-                if(ReceiveExceptionHandler == null)
+                if(ExceptionHandler != null)
                 {
-                    TempPlayers.Clear();
-                    MyAPIGateway.Players.GetPlayers(TempPlayers, (p) => p.SteamUserId == senderSteamId); // callback not ideal for speed but this is an error so whatever
-                    IMyPlayer sender = TempPlayers.FirstOrDefault();
-                    TempPlayers.Clear();
-
-                    e = new Exception($"{ModName} Error during ReceivedPacket; additional info: sender={sender?.DisplayName ?? "<unknown>"} ({senderSteamId}); bytes={string.Join(",", serialized)}", e);
+                    ExceptionHandler.Invoke(e);
+                }
+                else
+                {
+                    DefaultExceptionHandler(e);
                 }
 
-                if(CustomExceptionHandler != null)
-                    CustomExceptionHandler.Invoke(e);
-                else
-                    DefaultExceptionHandler(e);
+                TempPlayers.Clear();
+                MyAPIGateway.Players.GetPlayers(TempPlayers, (p) => p.SteamUserId == senderSteamId); // callback not ideal for speed but this is an error so whatever
+                IMyPlayer sender = TempPlayers.FirstOrDefault();
+                TempPlayers.Clear();
 
                 if(ReceiveExceptionHandler != null)
-                    ReceiveExceptionHandler.Invoke(senderSteamId, serialized);
+                {
+                    ReceiveExceptionHandler.Invoke(senderSteamId, sender, serialized);
+                }
+                else
+                {
+                    MyLog.Default.WriteLineAndConsole($"{ModName} ReceivedPacket error additional info: sender={sender?.DisplayName ?? "<unknown>"} ({senderSteamId}); bytes={string.Join(",", serialized)}");
+                }
             }
         }
 
@@ -191,8 +197,8 @@ namespace Digi.NetworkLib
                 if(senderSteamId != packet.OriginalSenderSteamId)
                 {
                     string text = $"WARNING: packet {packet.GetType().Name} from {senderSteamId.ToString()} has altered OriginalSenderSteamId to {packet.OriginalSenderSteamId.ToString()}. Replaced it with proper id, but if this triggers for everyone then it's a bug somewhere.";
-                    if(CustomErrorHandler != null)
-                        CustomErrorHandler.Invoke(text);
+                    if(ErrorHandler != null)
+                        ErrorHandler.Invoke(text);
                     else
                         DefaultErrorHandler(text);
 
@@ -228,7 +234,7 @@ namespace Digi.NetworkLib
 
         void DefaultExceptionHandler(Exception e)
         {
-            MyLog.Default.WriteLineAndConsole($"{ModName} ERROR: {e.Message}\n{e.StackTrace}");
+            MyLog.Default.WriteLineAndConsole($"{ModName} ERROR: {e}");
 
             if(MyAPIGateway.Session?.Player != null)
                 MyAPIGateway.Utilities.ShowNotification($"[ERROR: {ModName}: {e.Message} | Send SpaceEngineers.Log to mod author]", 10000, MyFontEnum.Red);

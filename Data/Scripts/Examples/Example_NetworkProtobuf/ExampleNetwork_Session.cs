@@ -28,11 +28,11 @@ namespace Digi.Examples.NetworkProtobuf
             Net = new Network(NetworkId, ModContext.ModName);
             // Also don't create multiple instances of Network (like instancing it in gamelogic, that would be very bad).
 
-            // If you have your own logger you can feed it here
-            //Net.CustomExceptionHandler = (e) => Log.Error(e);
-            //Net.CustomErrorHandler = (msg) => Log.Error(msg);
+            // If you want errors to use your logger then you can do:
+            //Net.ExceptionHandler = (e) => Log.Error(e);
+            //Net.ErrorHandler = (msg) => Log.Error(msg);
 
-            // Helps test if serialization works in singleplayer when using SendToServer().
+            // To test if serialization works in singleplayer when using SendToServer().
             Net.SerializeTest = true;
 
 
