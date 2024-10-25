@@ -11,6 +11,8 @@ using VRageMath;
 
 namespace Digi.Examples
 {
+    // This shows the basics, recommended to look at the newer Example_SubpartMoveAdvanced.cs for animating multiple subparts linearly and/or rotationally
+
     // Edit the block type and subtypes to match your custom block.
     // For type always use the same name as the <TypeId> and append "MyObjectBuilder_" to it, don't use the one from xsi:type.
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Reactor), false, "YourSubtypeHere", "More if needed")]
@@ -80,7 +82,7 @@ namespace Digi.Examples
 
                     if(targetSpeedMultiplier > 0)
                     {
-                        subpartLocalMatrix *= Matrix.CreateFromAxisAngle(ROTATION_AXIS, MathHelper.ToRadians(targetSpeedMultiplier * DEGREES_PER_TICK));
+                        subpartLocalMatrix = Matrix.CreateFromAxisAngle(ROTATION_AXIS, MathHelper.ToRadians(targetSpeedMultiplier * DEGREES_PER_TICK)) * subpartLocalMatrix;
                         subpartLocalMatrix = Matrix.Normalize(subpartLocalMatrix); // normalize to avoid any rotation inaccuracies over time resulting in weird scaling
                     }
 
