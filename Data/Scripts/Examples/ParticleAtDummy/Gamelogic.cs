@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
+using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
@@ -12,16 +13,57 @@ namespace Digi.Examples
 {
     public interface IUpdateable
     {
+        MyEntityUpdateEnum Frequency { get; }
+
         void Update();
     }
 
     public abstract partial class StandardParticleGamelogic : MyGameLogicComponent
     {
+        protected bool DebugMode = false;
         IMyCubeBlock Block;
-        int LastModelId = 0;
-        List<ParticleBase> SpawnedParticles = new List<ParticleBase>();
-        List<IUpdateable> UpdateableParticles = new List<IUpdateable>();
+        List<ParticleBase> SpawnedParticles;
+        List<IUpdateable> UpdateParticles;
 
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
+        {
+            if(MyAPIGateway.Utilities.IsDedicated && MyAPIGateway.Session.IsServer)
+                return;
+
+            NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+        }
+
+        public override void MarkForClose()
+        {
+            RemoveAllParticles();
+        }
+
+        public override void UpdateOnceBeforeFrame()
+        {
+            Block = Entity as IMyCubeBlock;
+            if(Block?.CubeGrid?.Physics == null)
+            {
+                if(DebugMode)
+                    MyAPIGateway.Utilities.ShowMessage(GetType().Name, "Ghost grid, skipped");
+
+                return;
+            }
+
+            if(PropOverrides == null)
+            {
+                PropOverrides = new Dictionary<string, Props>();
+                Setup();
+            }
+
+            var ent = (MyEntity)Block;
+            ent.OnModelRefresh += BlockModelChanged;
+            BlockModelChanged(ent);
+
+            if(DebugMode)
+                MyAPIGateway.Utilities.ShowMessage(GetType().Name, "Logic initialized");
+        }
+
+        #region For user setup
         static Dictionary<string, Props> PropOverrides;
 
         class Props
@@ -36,98 +78,148 @@ namespace Digi.Examples
             }
         }
 
-        protected void Declare(string dummy, string particle, string condition)
+        protected void Declare(string dummy, string particle, string condition = null)
         {
+            if(PropOverrides.ContainsKey(dummy))
+                LogError(this, $"Dummy '{dummy}' is declared multiple times, the older ones are overwritten!");
+
             PropOverrides[dummy] = new Props(particle, condition);
         }
 
         protected virtual void Setup() { }
+        #endregion
 
-        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
+        public override void UpdateAfterSimulation()
         {
-            if(MyAPIGateway.Utilities.IsDedicated && MyAPIGateway.Session.IsServer)
+            if(UpdateParticles == null)
                 return;
 
-            NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
-        }
-
-        public override void MarkForClose()
-        {
-            ClearParticles();
-        }
-
-        public override void UpdateOnceBeforeFrame()
-        {
-            Block = Entity as IMyCubeBlock;
-            if(Block?.CubeGrid?.Physics == null)
-                return;
-
-            if(PropOverrides == null)
+            foreach(var obj in UpdateParticles)
             {
-                PropOverrides = new Dictionary<string, Props>();
-                Setup();
+                if(obj.Frequency == MyEntityUpdateEnum.EACH_FRAME)
+                    obj.Update();
             }
-
-            NeedsUpdate = MyEntityUpdateEnum.EACH_10TH_FRAME;
         }
 
         public override void UpdateBeforeSimulation10()
         {
-            int modelId = Entity.Model.UniqueId;
-            if(LastModelId != modelId)
-            {
-                LastModelId = modelId;
-                ModelChanged();
-            }
+            if(UpdateParticles == null)
+                return;
 
-            foreach(IUpdateable obj in UpdateableParticles)
+            foreach(var obj in UpdateParticles)
             {
-                obj.Update();
+                if(obj.Frequency == MyEntityUpdateEnum.EACH_10TH_FRAME)
+                    obj.Update();
             }
         }
 
-        static Dictionary<string, IMyModelDummy> _tempDummies = new Dictionary<string, IMyModelDummy>();
-        void ModelChanged()
+        public override void UpdateAfterSimulation100()
+        {
+            if(UpdateParticles == null)
+                return;
+
+            foreach(var obj in UpdateParticles)
+            {
+                if(obj.Frequency == MyEntityUpdateEnum.EACH_100TH_FRAME)
+                    obj.Update();
+            }
+        }
+
+        static readonly Dictionary<string, IMyModelDummy> TempDummies = new Dictionary<string, IMyModelDummy>();
+
+        void BlockModelChanged(MyEntity ent)
         {
             try
             {
-                ClearParticles();
+                RemoveAllParticles();
+                FindDummiesRecursive(ent);
 
-                _tempDummies.Clear();
-                Entity.Model.GetDummies(_tempDummies);
-                if(_tempDummies.Count == 0)
-                    return;
-
-                foreach(IMyModelDummy dummy in _tempDummies.Values)
+                var updates = MyEntityUpdateEnum.NONE;
+                if(UpdateParticles != null)
                 {
-                    ParticleBase particleData = CreateFromDummy(dummy);
-                    if(particleData != null)
+                    foreach(var obj in UpdateParticles)
                     {
-                        SpawnedParticles.Add(particleData);
-
-                        IUpdateable updateable = (particleData as IUpdateable);
-                        if(updateable != null)
-                            UpdateableParticles.Add(updateable);
+                        updates |= obj.Frequency;
                     }
                 }
+                NeedsUpdate = updates;
             }
             catch(Exception e)
             {
-                AddToLog(this, e);
-            }
-            finally
-            {
-                _tempDummies.Clear();
+                LogError(this, e);
             }
         }
 
-        ParticleBase CreateFromDummy(IMyModelDummy dummy)
+        void FindDummiesRecursive(MyEntity ent)
+        {
+            GetDummies(ent);
+
+            foreach(MyEntitySubpart subpart in ent.Subparts.Values)
+            {
+                FindDummiesRecursive(subpart);
+            }
+        }
+
+        void GetDummies(IMyEntity parent)
+        {
+            try
+            {
+                TempDummies.Clear();
+                parent.Model.GetDummies(TempDummies);
+                if(TempDummies.Count == 0)
+                    return;
+
+                foreach(IMyModelDummy dummy in TempDummies.Values)
+                {
+                    ParticleBase particleData = null;
+                    try
+                    {
+                        particleData = CreateFromDummy(parent, dummy);
+                        if(particleData != null)
+                        {
+                            if(DebugMode)
+                                MyAPIGateway.Utilities.ShowMessage(GetType().Name, $"Spawned {particleData.GetType().Name} for {dummy.Name}");
+
+                            if(SpawnedParticles == null)
+                                SpawnedParticles = new List<ParticleBase>();
+
+                            SpawnedParticles.Add(particleData);
+
+                            var updateable = particleData as IUpdateable;
+                            if(updateable != null)
+                            {
+                                if(UpdateParticles == null)
+                                    UpdateParticles = new List<IUpdateable>();
+
+                                UpdateParticles.Add(updateable);
+                            }
+                        }
+                        else
+                        {
+                            if(DebugMode)
+                                MyAPIGateway.Utilities.ShowMessage(GetType().Name, $"Skipped {dummy.Name}");
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        LogError(this, e);
+                        particleData?.Close();
+                    }
+                }
+            }
+            finally
+            {
+                TempDummies.Clear();
+            }
+        }
+
+        ParticleBase CreateFromDummy(IMyEntity parent, IMyModelDummy dummy)
         {
             if(PropOverrides != null && PropOverrides.Count > 0)
             {
                 Props dec;
                 if(PropOverrides.TryGetValue(dummy.Name, out dec))
-                    return CreateParticleHolder(dummy, dec.ParticleSubtypeId, dec.Condition);
+                    return CreateParticleHolder(parent, dummy, dec.ParticleSubtypeId, dec.Condition);
             }
 
             // customdata way, not working with SEUT currently but leaving it here in case anyone wants to experiment
@@ -138,14 +230,14 @@ namespace Digi.Examples
             object obj;
             if(!dummy.CustomData.TryGetValue("particle", out obj))
             {
-                AddToLog(this, $"Cannot find 'particle' customdata on dummy '{dummy.Name}' (block '{Block.BlockDefinition}')");
+                LogError(this, $"Cannot find 'particle' customdata on dummy '{dummy.Name}' (block '{Block.BlockDefinition}')");
                 return null;
             }
 
             string subtypeId = obj as string;
             if(string.IsNullOrEmpty(subtypeId))
             {
-                AddToLog(this, $"Particle subtype is empty or wrong type for dummy '{dummy.Name}' (block '{Block.BlockDefinition}')");
+                LogError(this, $"Particle subtype is empty or wrong type for dummy '{dummy.Name}' (block '{Block.BlockDefinition}')");
                 return null;
             }
 
@@ -153,24 +245,32 @@ namespace Digi.Examples
             if(dummy.CustomData.TryGetValue("condition", out obj) && obj is string)
             {
                 string condition = (string)obj;
-                return CreateParticleHolder(dummy, subtypeId, condition);
+                return CreateParticleHolder(parent, dummy, subtypeId, condition);
             }
 
-            return CreateParticleHolder(dummy, subtypeId);
+            return CreateParticleHolder(parent, dummy, subtypeId);
         }
 
-        void ClearParticles()
+        void RemoveAllParticles()
         {
-            foreach(var data in SpawnedParticles)
+            try
             {
-                data.Close();
+                if(SpawnedParticles != null)
+                {
+                    foreach(ParticleBase obj in SpawnedParticles)
+                    {
+                        obj.Close();
+                    }
+                }
             }
-
-            SpawnedParticles.Clear();
-            UpdateableParticles.Clear();
+            finally
+            {
+                SpawnedParticles?.Clear();
+                UpdateParticles?.Clear();
+            }
         }
 
-        public static void AddToLog(object source, Exception e)
+        public static void LogError(object source, Exception e)
         {
             MyLog.Default.WriteLineAndConsole($"ERROR {source?.GetType()?.FullName}: {e.ToString()}");
 
@@ -178,7 +278,7 @@ namespace Digi.Examples
                 MyAPIGateway.Utilities.ShowNotification($"[ ERROR: {source?.GetType()?.FullName}: {e.Message} | Send SpaceEngineers.Log to mod author ]", 10000, MyFontEnum.Red);
         }
 
-        public static void AddToLog(object source, string text)
+        public static void LogError(object source, string text)
         {
             MyLog.Default.WriteLineAndConsole($"ERROR {source?.GetType()?.FullName}: {text}");
 

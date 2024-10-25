@@ -27,34 +27,37 @@ namespace Digi.Examples
     // this is where the conditions are registered with the gamelogic
     public abstract partial class StandardParticleGamelogic
     {
-        ParticleBase CreateParticleHolder(IMyModelDummy dummy, string particleSubtypeId, string condition = null)
+        ParticleBase CreateParticleHolder(IMyEntity parent, IMyModelDummy dummy, string particleSubtypeId, string condition = null)
         {
             switch(condition)
             {
-                case "working": // only shows particle if block is functional+enabled+powered
-                    return new ParticleOnWorking(this, particleSubtypeId, dummy.Matrix);
+                case "working": // only shows particle if block is built above red line and if it has on/off then if it's on as well.
+                    return new ParticleOnWorking(this, parent, particleSubtypeId, dummy.Matrix);
 
                 case "producing": // only show particle if block is a refinery/assembler/survivalkit/gasgenerator and it's currently producing
-                    return new ParticleOnProducing(this, particleSubtypeId, dummy.Matrix);
+                    return new ParticleOnProducing(this, parent, particleSubtypeId, dummy.Matrix);
 
                     // add more here if you make more custom condition classes
             }
 
-            return new ParticleBase(this, particleSubtypeId, dummy.Matrix);
+            return new ParticleBase(this, parent, particleSubtypeId, dummy.Matrix);
         }
     }
 
     // just a basic particle container that holds it until model changes, nothing to edit here.
     public class ParticleBase
     {
-        public StandardParticleGamelogic GameLogic;
-        public string SubtypeId;
+        public readonly IMyEntity Parent;
+        public readonly StandardParticleGamelogic GameLogic;
+        public readonly string SubtypeId;
+
         public MatrixD LocalMatrix;
         public MyParticleEffect Effect;
 
-        public ParticleBase(StandardParticleGamelogic gamelogic, string subtypeId, MatrixD localMatrix)
+        public ParticleBase(StandardParticleGamelogic gamelogic, IMyEntity parent, string subtypeId, MatrixD localMatrix)
         {
             GameLogic = gamelogic;
+            Parent = parent;
             SubtypeId = subtypeId;
             LocalMatrix = localMatrix;
 
@@ -72,8 +75,8 @@ namespace Digi.Examples
         protected virtual MyParticleEffect SpawnParticle()
         {
             MyParticleEffect effect;
-            Vector3D worldPos = GameLogic.Entity.GetPosition();
-            uint parentId = GameLogic.Entity.Render.GetRenderObjectID();
+            Vector3D worldPos = Parent.GetPosition();
+            uint parentId = Parent.Render.GetRenderObjectID();
             if(!MyParticlesManager.TryCreateParticleEffect(SubtypeId, ref LocalMatrix, ref worldPos, parentId, out effect))
                 return null;
 
@@ -83,23 +86,25 @@ namespace Digi.Examples
 
     // example particle with condition
     // you can clone+rename+change to have some custom conditions, just remember to add it to CreateParticleHolder() above.
-    public class ParticleOnWorking : ParticleBase, IUpdateable
+    public class ParticleOnWorking : ParticleBase
     {
-        public readonly IMyFunctionalBlock Block;
+        public readonly IMyCubeBlock Block;
 
-        public ParticleOnWorking(StandardParticleGamelogic gamelogic, string subtypeId, MatrixD localMatrix) : base(gamelogic, subtypeId, localMatrix)
+        public ParticleOnWorking(StandardParticleGamelogic gamelogic, IMyEntity parent, string subtypeId, MatrixD localMatrix) : base(gamelogic, parent, subtypeId, localMatrix)
         {
-            Block = gamelogic.Entity as IMyFunctionalBlock;
-            if(Block == null)
-                throw new Exception($"{GetType().Name}: Unsupported block type, needs on/off");
+            Block = (IMyCubeBlock)gamelogic.Entity;
+            Block.IsWorkingChanged += BlockWorkingChanged;
+            BlockWorkingChanged(Block);
         }
 
-        // frequency dictated by the gamelogic, currently it's every 10th tick (approx, they're spread out to run as few per tick as possible)
-        public void Update()
+        public override void Close()
         {
-            if(Block == null)
-                return;
+            base.Close();
+            Block.IsWorkingChanged -= BlockWorkingChanged;
+        }
 
+        void BlockWorkingChanged(IMyCubeBlock _)
+        {
             bool currentState = Effect != null;
             bool targetState = Block.IsWorking;
 
@@ -123,7 +128,7 @@ namespace Digi.Examples
         public readonly IMyProductionBlock Production;
         public readonly IMyGasGenerator GasGenerator;
 
-        public ParticleOnProducing(StandardParticleGamelogic gamelogic, string subtypeId, MatrixD localMatrix) : base(gamelogic, subtypeId, localMatrix)
+        public ParticleOnProducing(StandardParticleGamelogic gamelogic, IMyEntity parent, string subtypeId, MatrixD localMatrix) : base(gamelogic, parent, subtypeId, localMatrix)
         {
             Production = gamelogic.Entity as IMyProductionBlock;
             GasGenerator = gamelogic.Entity as IMyGasGenerator;
@@ -132,7 +137,9 @@ namespace Digi.Examples
                 throw new Exception($"{GetType().Name}: Unsupported block type, needs to be: assembler, survivalkit, refinery, gasgenerator");
         }
 
-        public void Update()
+        MyEntityUpdateEnum IUpdateable.Frequency { get; } = MyEntityUpdateEnum.EACH_100TH_FRAME;
+
+        void IUpdateable.Update()
         {
             bool currentState = Effect != null;
             bool targetState = false;

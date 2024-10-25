@@ -15,24 +15,30 @@ using VRageMath;
 
 namespace Digi.Examples
 {
-    // a generic script to attach particles to dummies in models.
+    // A generic script to attach particles to dummies in models.
 
-    // first you need a class like the example one below, one per block type so if you need more types just duplicate the entire code chunk.
+    // First you need a class like the example one below, one per block type.
+    // If you need more types just duplicate the entire code chunk (or more advanced way is to make classes with attributes inheriting a common one)
 
-    // the MyEntityComponentDescriptor line is what block type and subtype(s), for type just use the <TypeId> and add MyObjectBuilder_ prefix.
-    // the subtypes can be removed entirely if you want it to affect all blocks of that type.
-
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Reactor), false, "SpecificSubtype", "MoreIfNeeded", "Etc...")]
+    // The MyEntityComponentDescriptor line is what block type and subtype(s).
+    //  - for type use the <TypeId> and add MyObjectBuilder_ prefix.
+    //  - the subtypes can be removed entirely if you want it to affect all blocks of that type.
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Reactor), false, "SpecificSubtype", "MoreIfNeeded", "etc...")]
     public class ParticleOnReactor : StandardParticleGamelogic
     {
         protected override void Setup()
         {
-            // a dummy gets assigned a particle id
-            // the condition part is what determines the behavior, see all options in Conditions.cs at the CreateParticleHolder()'s switch.
+            Declare(dummy: "some_dummy_name", // The exact name of an in-model dummy, can be in subparts as well.
+                                              // NOTE: do not declare the same dummy name multiple times, it will override.
+                    particle: "ExhaustFire", // Particle effect subtypeId, must exist and must be a loop.
+                                             // The particle will be parented to the block or subpart at the dummy location and orientation.
+                    condition: "working" // Logic that determines behavior, see all options in Conditions.cs at the CreateParticleHolder()'s switch. 
+            );
 
-            Declare(dummy: "some_empty_name", particle: "SomeParticleSubtypeId", condition: "working");
+            // can repeat the above declaration for more particles on other dummies
 
-            // only one particle per dummy but you can have as many dummies as you want (by copy-pasting the line above multiple times)
+
+            DebugMode = false; // turn on to enable debug chat messages for this block
         }
     }
 
