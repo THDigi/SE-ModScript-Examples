@@ -17,9 +17,15 @@ namespace Digi.Examples.TerminalControls.Adding
     // Example of adding terminal controls and actions to a specific gyro subtype.
     // It can be generalized to the entire type by simply not using the visible-filtering methods.
 
+    /*
+     *  Terminal Controls are the interactive checkboxes/sliders/etc you see in a block's terminal
+     *  Terminal Actions are for toolbars
+     *  Terminal Properties are API getters/setters that are used by code to interact with some code,
+     *                      these are automatically generated for some terminal control types.
+     */
 
     /*
-     * Important notes about controls/actions:
+     * Important behaviors about controls/actions:
      * 
      * 1. They are global per block type! Not per block instance, not per block type+subtype.
      * Which is why they need to be added once per world and isolated to avoid accidental use of instanced things from a gamelogic.
@@ -30,7 +36,7 @@ namespace Digi.Examples.TerminalControls.Adding
      * 3. They're only UI! They do not save nor sync anything, they only read and call things locally.
      * That means you have to roll your own implementation of saving and synchronizing the data.
      * 
-     * Also keep in mind that these can be called by mods and PBs, which also includes being called dedicated-server-side.
+     * NOTE: all these can also be called by mods and PBs, which also includes being called dedicated-server-side.
      * Make sure your backend code does all the checks, including ensuring limits for sliders and such.
      */
 
