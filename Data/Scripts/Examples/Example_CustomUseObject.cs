@@ -6,13 +6,21 @@ using VRage.Utils;
 
 namespace Digi.Examples
 {
-    // Useobjects are interactive areas on entities (primarily used on blocks).
-    // The model of the entity needs a detector_someNameHere dummy in it which acts as the interaction area.
-    // Then enter that "someNameHere" in this attribute to have this object be instanced for it.
+    // UseObjects are interactive areas on entities (primarily used on blocks).
 
-    // You can also override vanilla ones, to play around with this without needing custom models you can use "terminal" and aim at any terminal panel on any block.
+    // First you need an empty on the model.
 
-    [MyUseObject("someNameHere")]
+    // You can OVERRIDE game's useobjects too, for example entering "terminal", but use it with caution because it will affect ALL blocks.
+    // This can also be used for some quick prototyping without a custom model.
+
+    // For your own model you need empties prefixed with detector_ and the name of the useobject is up until the next _ (if any).
+    // Examples: detector_YourUseObjectName_IgnoredStuff    -> [MyUseObject("YourUseObjectName")]
+    //           detector_YourUseObjectName_2               -> [MyUseObject("YourUseObjectName")]
+    //           detector_SomethingElse                     -> [MyUseObject("SomethingElse")]
+    // The names are not case-sensitive.
+    // Recommended to use a very unique name, like your mod name.
+    // For a different explanation see the useobjects guide: https://steamcommunity.com/sharedfiles/filedetails/?id=2560048279
+    [MyUseObject("YourUseObjectName")]
     public class Example_CustomUseObject : MyUseObjectBase
     {
         // Probably determines what actions to show as hints? Experiment!
