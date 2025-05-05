@@ -2,6 +2,7 @@
 using System.IO;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
+using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Ingame.Utilities; // this ingame namespace is safe to use in mods as it has nothing to collide with
 using VRage.Utils;
 
@@ -20,11 +21,11 @@ namespace Digi.Examples
 
         public override void LoadData()
         {
-            Settings.Load();
+            Settings.Load(ModContext);
 
             // example usage/debug
-            MyLog.Default.WriteLineAndConsole($"### SomeNumber value={Settings.SomeNumber}");
-            MyLog.Default.WriteLineAndConsole($"### ToggleThings value={Settings.ToggleThings}");
+            MyLog.Default.WriteLineAndConsole($"### DEBUG {ModContext.ModName} :: SomeNumber value={Settings.SomeNumber}");
+            MyLog.Default.WriteLineAndConsole($"### DEBUG {ModContext.ModName} :: ToggleThings value={Settings.ToggleThings}");
         }
     }
 
@@ -37,6 +38,8 @@ namespace Digi.Examples
         // settings you'd be reading, and their defaults.
         public float SomeNumber = 1f;
         public bool ToggleThings = true;
+
+        IMyModContext Mod;
 
         void LoadConfig(MyIni iniParser)
         {
@@ -61,8 +64,10 @@ namespace Digi.Examples
         {
         }
 
-        public void Load()
+        public void Load(IMyModContext mod)
         {
+            Mod = mod;
+
             if(MyAPIGateway.Session.IsServer)
                 LoadOnHost();
             else
@@ -71,6 +76,16 @@ namespace Digi.Examples
 
         void LoadOnHost()
         {
+            // HACK: Fix for files created in game's CustomWorlds folder when world is created with this mod present.
+            string savePath = MyAPIGateway.Session?.CurrentPath;
+            string gamePath = MyAPIGateway.Utilities?.GamePaths?.ContentPath;
+            if(savePath == null || gamePath == null || savePath.StartsWith(MyAPIGateway.Utilities.GamePaths.ContentPath))
+            {
+                Log("Delaying world config loading/creating because of world creation bugs...");
+                MyAPIGateway.Utilities.InvokeOnGameThread(LoadOnHost);
+                return;
+            }
+
             MyIni iniParser = new MyIni();
 
             // load file if exists then save it regardless so that it can be sanitized and updated
@@ -86,6 +101,7 @@ namespace Digi.Examples
                         throw new Exception($"Config error: {result.ToString()}");
 
                     LoadConfig(iniParser);
+                    Log("World config loaded!");
                 }
             }
 
@@ -101,6 +117,8 @@ namespace Digi.Examples
             {
                 file.Write(saveText);
             }
+
+            Log("World config created/updated.");
         }
 
         void LoadOnClient()
@@ -115,6 +133,12 @@ namespace Digi.Examples
                 throw new Exception($"Config error: {result.ToString()}");
 
             LoadConfig(iniParser);
+            Log("World config loaded!");
+        }
+
+        void Log(string msg)
+        {
+            MyLog.Default.WriteLineAndConsole($"Mod {Mod.ModName}: {msg}");
         }
     }
 }
