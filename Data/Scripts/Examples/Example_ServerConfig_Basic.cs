@@ -77,6 +77,7 @@ namespace Digi.Examples
         void LoadOnHost()
         {
             // HACK: Fix for files created in game's CustomWorlds folder when world is created with this mod present.
+            // bugreport: https://support.keenswh.com/spaceengineers/pc/topic/47762-modapi-write-to-world-storage-can-write-to-game-folder
             string savePath = MyAPIGateway.Session?.CurrentPath;
             string gamePath = MyAPIGateway.Utilities?.GamePaths?.ContentPath;
             if(savePath == null || gamePath == null || savePath.StartsWith(MyAPIGateway.Utilities.GamePaths.ContentPath))
