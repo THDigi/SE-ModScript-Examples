@@ -36,6 +36,9 @@ namespace Digi.Examples.TerminalControls.Adding
      * 3. They're only UI! They do not save nor sync anything, they only read and call things locally.
      * That means you have to roll your own implementation of saving and synchronizing the data.
      * 
+     * 4. GetControls()/GetActions() cause bugs with vanishing vanilla controls.
+     * Ideally avoid using these entirely, but in some cases it's unavoidable, test throughly with other mods that also add controls for the same block type!
+     * 
      * NOTE: all these can also be called by mods and PBs, which also includes being called dedicated-server-side.
      * Make sure your backend code does all the checks, including ensuring limits for sliders and such.
      */
