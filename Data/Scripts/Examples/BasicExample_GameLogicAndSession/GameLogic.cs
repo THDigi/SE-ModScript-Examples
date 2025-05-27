@@ -14,7 +14,7 @@ namespace Digi.Examples
     // It is not entirely reliable for some entity types, for example:
     //   - for grids it can not attach at all for MP clients;
     //   - characters it can sometimes not get added;
-    //   - solar panels and oxygen farms overwrite their gamelogic comp so it breaks any mods trying to add to them;
+    //   - CTC, solar panels and oxygen farms overwrite their gamelogic comp so it breaks any mods trying to add to them;
     //   - and probably more...
     // Workaround for these is to use a session comp to track the entity additions&removals, storing them in a list/dictionary then update them yourself.
 
@@ -87,6 +87,7 @@ namespace Digi.Examples
             base.MarkForClose();
 
             // called when entity is about to be removed for whatever reason (block destroyed, entity deleted, ship despawn because of sync range, etc)
+            // override Close() also works but it's a tiny bit later
         }
 
         public override void UpdateAfterSimulation()
@@ -131,11 +132,11 @@ namespace Digi.Examples
             // only called when game is paused.
         }
 
-
         // WARNING: OnAddedToScene() and OnRemovedFromScene() never trigger if the block has more than one gamelogic comp.
-        //   I advise against using these to avoid surprises down the line.
-        //
+        // I advise not using these to avoid surprises down the line.
         // Reason is Entity.GameLogic turns into a MyCompositeGameLogicComponent which holds an inner list of the actual gamelogic components,
         //   but it does not override those 2 methods to pass their call along to the held components.
+        //
+        // Also advised to not use OnAddedToContainer() and OnBeforeRemovedFromContainer()
     }
 }
