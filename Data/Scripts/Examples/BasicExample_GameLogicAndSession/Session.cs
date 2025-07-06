@@ -46,9 +46,19 @@ namespace Digi.Examples
 
         protected override void UnloadData()
         {
-            // executed when world is exited to unregister events and stuff
-
-            Instance = null; // important for avoiding this object to remain allocated in memory
+            // always catch errors here because throwing them will NOT crash the game and instead prevent other mods from unloading properly, causing all sorts of hidden issues...
+            try
+            {
+                // executed when world is exited to unregister events and stuff.
+            }
+            catch(Exception e)
+            {
+                MyLog.Default.Error(e.ToString());
+            }
+            finally
+            {
+                Instance = null; // important for avoiding this instance and all its references to remain allocated in memory
+            }
         }
 
         public override void HandleInput()
