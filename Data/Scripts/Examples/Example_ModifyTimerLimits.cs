@@ -70,7 +70,7 @@ namespace Digi.Examples
 
     // the vanilla Delay slider ignores the Min/MaxDelay tags but everything else seems to not
     // so this piece of code changes its limits to respect those tags.
-    static class TerminalControls
+    static class ModifyTimerTerminalControls
     {
         static bool ControlsModified = false;
 
@@ -143,7 +143,7 @@ namespace Digi.Examples
 
         public override void UpdateOnceBeforeFrame()
         {
-            TerminalControls.Setup(); // HACK: because terminal controls are weird
+            ModifyTimerTerminalControls.Setup(); // HACK: because terminal controls are weird
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Digi.Examples
     //    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_OreDetector), false, "Subtype here", "More subtypes if needed", "etc")]
     //
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_OreDetector), false)]
-    public class Example_OreDetector : MyGameLogicComponent
+    public class Example_EditPowerUsage : MyGameLogicComponent
     {
         const float POWER_REQUIRED_MW = 10.0f;
 

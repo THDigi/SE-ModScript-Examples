@@ -330,7 +330,7 @@ namespace Digi.Examples
 
         private void LogError(Exception e)
         {
-            MyLog.Default.WriteLineAndConsole($"{e.Message}\n{e.StackTrace}");
+            MyLog.Default.WriteLineAndConsole(e.ToString());
 
             if(MyAPIGateway.Session?.Player != null)
                 MyAPIGateway.Utilities.ShowNotification($"[ ERROR: {GetType().FullName}: {e.Message} | Send SpaceEngineers.Log to mod author ]", 10000, MyFontEnum.Red);
