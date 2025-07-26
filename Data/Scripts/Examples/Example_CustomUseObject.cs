@@ -8,19 +8,26 @@ namespace Digi.Examples
 {
     // UseObjects are interactive areas on entities (primarily used on blocks).
 
-    // First you need an empty on the model.
+    // First you need an empty/dummy on the model.
+    //
+    // You can OVERRIDE game's useobjects too, for example entering "terminal" will affect all block's terminal interactions in the game, including the ones from mods!
+    // This "terminal" one can be temporarily used for prototyping before making a custom model.
 
-    // You can OVERRIDE game's useobjects too, for example entering "terminal", but use it with caution because it will affect ALL blocks.
-    // This can also be used for some quick prototyping without a custom model.
+    // For custom dummies, the dummy name must start with "detector_" followed by a UNIQUE name without any "_".
+    // Optionally, if you need multiple of them, suffix with _1, _2, or even _001, _002, etc but the "_" is important.
+    // It's recommended to enter a unique name (like the mod name or author name) because you risk other mods overriding yours or vice-versa.
 
-    // For your own model you need empties prefixed with detector_ and the name of the useobject is up until the next _ (if any).
-    // Examples: detector_YourUseObjectName_IgnoredStuff    -> [MyUseObject("YourUseObjectName")]
-    //           detector_YourUseObjectName_2               -> [MyUseObject("YourUseObjectName")]
-    //           detector_SomethingElse                     -> [MyUseObject("SomethingElse")]
-    // The names are not case-sensitive.
-    // Recommended to use a very unique name, like your mod name.
+    // Then, for MyUseObject below you must enter the unique name only:
+    //  First, strip away the "detector_" prefix, then the very next "_" you find, remove it and everything after, now you have the useobject name to enter in MyUseObject below.
+    //  Another way to look at it: dummyName.Split("_")[1] - this is what they're looking for when processing the dummies in a model.
+    // Examples: detector_YourUniqueName_IgnoredStuff    -> [MyUseObject("YourUniqueName")]
+    //           detector_YourUniqueName_2               -> [MyUseObject("YourUniqueName")]
+    //           detector_SomethingELSE                  -> [MyUseObject("somethingelse")]
+    // The name is not case-sensitive.
+
     // For a different explanation see the useobjects guide: https://steamcommunity.com/sharedfiles/filedetails/?id=2560048279
-    [MyUseObject("YourUseObjectName")]
+
+    [MyUseObject("YourUniqueName")]
     public class Example_CustomUseObject : MyUseObjectBase
     {
         // Probably determines what actions to show as hints? Experiment!
