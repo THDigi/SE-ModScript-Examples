@@ -41,12 +41,12 @@ namespace Digi.Examples
             float lineLength = 1f;
             float lineThickness = 0.05f;
 
-            // how the billboard interacts with world/lighting.
-            // Standard is affected by tonemapping and post processing
-            // AdditiveBottom always gets rendered under objets.
-            // AdditiveTop always gets rendered over objects.
-            // SDR & LDR (they're the same value) ignore tonemapping.
-            // PostPP ignores tonemapping and post processing.
+            // How the billboard interacts with world/lighting. What each value does:
+            //   Standard - regular, affected by tonemapping and post-processing.
+            //   AdditiveBottom - same as regular but gets rendered under objects.
+            //   AdditiveTop - same as regular but gets rendered over objects.
+            //   SDR and LDR (they're the same integer) - ignores tonemapping but still affected by post processing, also does NOT get sorted by distance to camera.
+            //   PostPP - ignores tonemapping and post-processing, also does NOT get sorted by distance to camera.
             BlendTypeEnum blendType = BlendTypeEnum.Standard;
 
             // all billboard methods accessible right now only live one tick
