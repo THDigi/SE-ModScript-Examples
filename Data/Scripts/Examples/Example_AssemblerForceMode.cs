@@ -9,6 +9,8 @@ using MyAssemblerMode = Sandbox.ModAPI.Ingame.MyAssemblerMode;
 
 namespace Digi.Examples
 {
+    // NOTE: Assemblers' disassembly mode can be turned off in SBC since SE v207: https://spaceengineers.wiki.gg/wiki/Modding/Reference/SBC/CubeBlocks/Assembler_Definition#EnableDisassembly
+
     // Edit the block subtypes to match your custom block(s).
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Assembler), false, "YourSubtypeHere", "More if needed", "etc...")]
     public class Example_AssemblerForceMode : MyGameLogicComponent
