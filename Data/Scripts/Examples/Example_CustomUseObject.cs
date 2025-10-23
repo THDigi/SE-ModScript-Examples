@@ -30,25 +30,26 @@ namespace Digi.Examples
     [MyUseObject("YourUniqueName")]
     public class Example_CustomUseObject : MyUseObjectBase
     {
-        // Probably determines what actions to show as hints? Experiment!
-        public override UseActionEnum SupportedActions => UseActionEnum.Manipulate
-                                                        | UseActionEnum.Close
-                                                        | UseActionEnum.BuildPlanner
-                                                        | UseActionEnum.OpenInventory
-                                                        | UseActionEnum.OpenTerminal
-                                                        | UseActionEnum.PickUp
-                                                        | UseActionEnum.UseFinished; // gets called when releasing manipulate
-
         // What action gets sent to Use() when interacted with PrimaryAttack or Use binds.
-        public override UseActionEnum PrimaryAction => UseActionEnum.Manipulate;
+        public override UseActionEnum PrimaryAction { get; } = UseActionEnum.Manipulate;
 
         // What action gets sent to Use() when interacted with SecondaryAttack or Inventory/Terminal binds.
-        public override UseActionEnum SecondaryAction => UseActionEnum.OpenTerminal;
+        public override UseActionEnum SecondaryAction { get; } = UseActionEnum.OpenTerminal;
+
+        // Optional, it returns (PrimaryAction | SecondaryAction) by default.
+        // Probably determines what actions to show as hints? Experiment!
+        public override UseActionEnum SupportedActions { get; } = UseActionEnum.Manipulate
+                                                                | UseActionEnum.Close
+                                                                | UseActionEnum.BuildPlanner
+                                                                | UseActionEnum.OpenInventory
+                                                                | UseActionEnum.OpenTerminal
+                                                                | UseActionEnum.PickUp
+                                                                | UseActionEnum.UseFinished; // makes Use() get called on releasing input
 
         public Example_CustomUseObject(IMyEntity owner, string dummyName, IMyModelDummy dummyData, uint shapeKey) : base(owner, dummyData)
         {
-            // This class gets instanced per entity that has this detector useobject on it.
-            // NOTE: this exact constructor signature is required, will throw errors mid-loading (and prevent world from loading) otherwise.
+            // This class gets instanced per entity and also per detector dummy.
+            // WARNING: this exact constructor signature is required, otherwise it throws errors mid-loading which prevents the world from loading.
         }
 
         public override MyActionDescription GetActionInfo(UseActionEnum actionEnum)
@@ -78,6 +79,7 @@ namespace Digi.Examples
         public override void Use(UseActionEnum actionEnum, IMyEntity user)
         {
             // Called when a supported input is used while aiming at this useobject
+            // NOTE: it can be called multiple times in the same tick, for example if ContinuousUsage is true and click+F key are held, this will trigger twice per tick.
 
             MyAPIGateway.Utilities.ShowNotification($"Use() action={actionEnum}; user={user}");
 
@@ -91,6 +93,6 @@ namespace Digi.Examples
             }
         }
 
-        // there's a few more things you can optionally override, like OnSelectionLost()
+        // there's a few more things you can optionally override, like OnSelectionLost(), ContinuousUsage, PlayIndicatorSound, etc.
     }
 }
