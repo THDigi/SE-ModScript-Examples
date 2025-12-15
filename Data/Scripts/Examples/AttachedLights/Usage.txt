@@ -1,3 +1,7 @@
-﻿Open Setup.cs and follow its indications.
+﻿
+NOTE: Since SE v207 the game has a LightingComponent which has terminal controls to configure too, replacing this script in many needs. See https://spaceengineers.wiki.gg/wiki/Modding/Reference/SBC/EntityComponents
+
+
+To use this script first copy all these files your mod's Data\Scripts\YourModName\*.cs and then open Setup.cs and follow its indications.
 
 To update, you only need to update the other files without Setup.cs.
