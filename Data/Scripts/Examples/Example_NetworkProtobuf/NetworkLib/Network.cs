@@ -92,7 +92,7 @@ namespace Digi.NetworkLib
         {
             if(!SerializeTest && MyAPIGateway.Multiplayer.IsServer) // short-circuit local call to avoid unnecessary serialization
             {
-                HandlePacket(packet, MyAPIGateway.Multiplayer.MyId, serialized);
+                HandlePacket(packet, MyAPIGateway.Multiplayer.MyId, true, serialized);
                 return;
             }
 
@@ -160,7 +160,7 @@ namespace Digi.NetworkLib
             try
             {
                 PacketBase packet = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase>(serialized);
-                HandlePacket(packet, senderSteamId, serialized);
+                HandlePacket(packet, senderSteamId, isSenderServer, serialized);
             }
             catch(Exception e)
             {
@@ -189,10 +189,11 @@ namespace Digi.NetworkLib
             }
         }
 
-        void HandlePacket(PacketBase packet, ulong senderSteamId, byte[] serialized = null)
+        void HandlePacket(PacketBase packet, ulong senderSteamId, bool isSenderServer, byte[] serialized = null)
         {
             // Server-side OriginalSenderSteamId validation
-            if(MyAPIGateway.Multiplayer.IsServer)
+            // skipping if sender is server because it always has ID 0 but its MyId is not 0 resulting in the error always triggering.
+            if(MyAPIGateway.Multiplayer.IsServer && !isSenderServer)
             {
                 if(senderSteamId != packet.OriginalSenderSteamId)
                 {
