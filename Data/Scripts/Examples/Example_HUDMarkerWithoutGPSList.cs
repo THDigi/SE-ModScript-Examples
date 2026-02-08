@@ -61,15 +61,15 @@ namespace Digi.Examples
 
         static IMyGps CreateHudMarker()
         {
-            IMyGps gps = MyAPIGateway.Session.GPS.Create(string.Empty, string.Empty, Vector3D.Zero, true, false);
+            IMyGps marker = MyAPIGateway.Session.GPS.Create(string.Empty, string.Empty, Vector3D.Zero, true, false);
 
-            MyAPIGateway.Session.GPS.AddLocalGps(gps);
+            MyAPIGateway.Session.GPS.AddLocalGps(marker);
 
             // HACK: trick the game to not remove the HUD marker by making it think it's not visible
-            gps.ShowOnHud = false;
-            MyAPIGateway.Session.GPS.RemoveLocalGps(gps);
+            marker.ShowOnHud = false;
+            MyAPIGateway.Session.GPS.RemoveLocalGps(marker);
 
-            return gps;
+            return marker;
         }
 
         static void RemoveHudMarker(IMyGps marker)
