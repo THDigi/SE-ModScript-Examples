@@ -13,7 +13,7 @@ namespace Digi.Examples
 {
     /*
      * Example of various things that all come together to make an oriented bounding box check intersections with ALL nearby grids' blocks seen as boundingboxes themselves.
-     * What it would look like in-game: https://i.imgur.com/IcR8w1v.jpeg
+     * What it would look like in-game: https://i.imgur.com/TzMEk55.jpeg
      * 
      * Mind that this is not a very efficient way and certainly should NOT be done like this every tick. There's also better ways of doing things depending on your needs.
      * For example, this is overkill if you wanted to check if player is near/inside your own block, for that, use a gamelogic component and iterate online players instead, way less results that way.
@@ -34,7 +34,10 @@ namespace Digi.Examples
             if(MyAPIGateway.Gui.IsCursorVisible)
                 return; // hide when looking at menus
 
-            // example of a way to require a key being pressed
+            if(MyAPIGateway.Session?.Player?.Character == null)
+                return; // no player or no character assigned
+
+            // example of a way to require a key being pressed, more info in Example_InputReading.cs
             //if(!MyAPIGateway.Input.IsAnyCtrlKeyPressed())
             //    return;
 
@@ -64,7 +67,8 @@ namespace Digi.Examples
         MyOrientedBoundingBoxD ComputeCollider()
         {
             // a copy of local character's position and orientation (a copy because MatrixD is a struct) then offset it by 5m towards character's forward.
-            var colliderWorldMatrix = MyAPIGateway.Session.Player?.Character?.WorldMatrix ?? MatrixD.Identity;
+            // This does not include the head rotation when walking, there's GetHeadMatrix() for that if needed.
+            var colliderWorldMatrix = MyAPIGateway.Session.Player.Character.WorldMatrix;
             colliderWorldMatrix.Translation += colliderWorldMatrix.Forward * 5;
 
             // an arbitrary axis-aligned boundingbox (AABB) that represents a 2m box centered around 0,0,0 (therefore it's a local space box)
@@ -74,7 +78,7 @@ namespace Digi.Examples
             MyOrientedBoundingBoxD collider = new MyOrientedBoundingBoxD(colliderLocalBB, colliderWorldMatrix);
 
             // render our collider OBB, for more info on rendering shapes/textures see the Example_DrawingIn3D.cs
-            Color colliderColor = Color.Yellow * 0.8f;
+            Color colliderColor = Color.Yellow;
             MySimpleObjectDraw.DrawTransparentBox(ref colliderWorldMatrix, ref colliderLocalBB, ref colliderColor, MySimpleObjectRasterizer.Solid, 1,
                 faceMaterial: Material, blendType: BlendTypeEnum.AdditiveTop);
 
@@ -118,35 +122,53 @@ namespace Digi.Examples
                 // most commonly, if a block has a rigid <Model> then it has a FatBlock/entity,
                 //   otherwise deformable armor which does not, will have null FatBlock, and that also makes them cheaper to compute.
 
+                // the addition of One is because Min and Max are positions. for example on 1x1x1 blocks they're the same number so would end up as 0 size.
+                Vector3I sizeInCells = (block.Max - block.Min) + Vector3I.One;
+                // size in meters but halved because it's useful later on
+                Vector3 halfExtents = sizeInCells * grid.GridSizeHalf;
 
-                // local matrix is the position and orientation in grid space (but still in meters as opposed to grid cells which is what block.Min and Max return).
-                Matrix blockLocalMatrix;
-                block.Orientation.GetMatrix(out blockLocalMatrix);
-                blockLocalMatrix.Translation = (block.Max + block.Min) * grid.GridSizeHalf;
+                // block's metric center, in grid's local space
+                Vector3 centerGridLocal = Vector3.Lerp(block.Min, block.Max, 0.5f) * grid.GridSize;
+                // which if you imagine a line from Min to Max (they're vectors), the middle point of that line is the center of the block.
 
-                // transform block local to world space using the worldmatrix of object it's local to.
-                // for more info on vector-matrix transforms: https://spaceengineers.wiki.gg/wiki/Scripting/Vector_Transformations_with_World_Matrices
-                // this is a matrix-matrix transform though which ultimately does the same thing but for each of the first matrix's vectors (and order matters unlike normal multiplication!)
-                MatrixD blockWorldMatrix = blockLocalMatrix * gridWorldMatrix;
+                // the above can be replaced by:
+                //Vector3D centerGridLocal;
+                //block.ComputeScaledCenter(out centerGridLocal);
+                //Vector3 halfExtents;
+                //block.ComputeScaledHalfExtents(out halfExtents);
+                // but it's probably slower - StopWatch is whitelisted so one can measure!
 
 
                 // block's axis-aligned bounding box (AABB) that is in grid's space.
-                // turning this to world space would mean it gets larger as the block rotates out of alignment with world axis, hence the axis-aligned limitation of these (and their speed because of it).
-                Vector3 halfExtents = (Vector3I.One + (block.Max - block.Min)) * grid.GridSizeHalf;
-                BoundingBoxD blockGridBB = new BoundingBoxD(blockLocalMatrix.Translation - halfExtents, blockLocalMatrix.Translation + halfExtents);
+                // not accurate to turn this into world space because then the BB would be axis-aligned to world, and would not be able to follow the block's orientation.
+                BoundingBoxD blockGridBB = new BoundingBoxD(centerGridLocal - halfExtents, centerGridLocal + halfExtents);
+                // and while you can make OBBs out of each block, it would be slower to compute OBB-OBB intersections than OBB-AABB ones.
 
                 // whether our custom OBB (after being transformed to grid space) overlaps or is contained in the grid-space block AABB
                 bool intesects = localCollider.Intersects(ref blockGridBB);
 
                 // render the block's boundingbox, we need it to be world space to render it.
                 Color bbColor = intesects ? Color.Lime : Color.Gray;
-
                 MySimpleObjectDraw.DrawTransparentBox(ref gridWorldMatrix, ref blockGridBB, ref bbColor, MySimpleObjectRasterizer.Solid, 1,
                     faceMaterial: Material, blendType: BlendTypeEnum.AdditiveTop);
 
-                // alternate way where we use the block's matrix, but now we need an AABB centered around the block, either way works, just have to remember the difference!
-                //BoundingBoxD blockBB = new BoundingBoxD(-halfExtents, halfExtents);
-                //MySimpleObjectDraw.DrawTransparentBox(ref blockWorldMatrix, ref blockBB, ref bbColor, MySimpleObjectRasterizer.Solid, 1, faceMaterial: Material, lineMaterial: Material, blendType: BlendTypeEnum.AdditiveTop);
+
+                /* some other things that might be useful:
+
+                // getting local matrix - the position and orientation in grid space (but still in meters as opposed to grid cells which is what block.Min and Max return).
+                Matrix blockLocalMatrix;
+                block.Orientation.GetMatrix(out blockLocalMatrix); // only gives orientation, which is why the next part is needed
+                blockLocalMatrix.Translation = blockCenterGridLocal;
+
+                // getting block's world matrix, by converting previously computed local to world space using the worldmatrix of object it's local to.
+                // for more info on vector-matrix transforms: https://spaceengineers.wiki.gg/wiki/Scripting/Vector_Transformations_with_World_Matrices
+                // this is a matrix-matrix transform though which ultimately does the same thing but for each of the first matrix's vectors (and order matters unlike normal multiplication!)
+                MatrixD blockWorldMatrix = blockLocalMatrix * gridWorldMatrix;
+                
+                // alternate way to render where we use the block's worldmatrix, but as you can se this requires more computing overall.
+                BoundingBoxD blockSpaceBB = new BoundingBoxD(-halfExtents, halfExtents);
+                MySimpleObjectDraw.DrawTransparentBox(ref blockWorldMatrix, ref blockSpaceBB, ref bbColor, MySimpleObjectRasterizer.Solid, 1, faceMaterial: Material, lineMaterial: Material, blendType: BlendTypeEnum.AdditiveTop);
+                */
             }
         }
     }
