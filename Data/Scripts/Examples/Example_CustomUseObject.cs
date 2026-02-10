@@ -1,4 +1,5 @@
 ﻿using Sandbox.ModAPI;
+using VRage.Game;
 using VRage.Game.Entity.UseObject;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
@@ -33,23 +34,25 @@ namespace Digi.Examples
         // What action gets sent to Use() when interacted with PrimaryAttack or Use binds.
         public override UseActionEnum PrimaryAction { get; } = UseActionEnum.Manipulate;
 
-        // What action gets sent to Use() when interacted with SecondaryAttack or Inventory/Terminal binds.
-        public override UseActionEnum SecondaryAction { get; } = UseActionEnum.OpenTerminal;
+        // Same as PrimaryAction but only used if that is left as None, making this pretty useless.
+        public override UseActionEnum SecondaryAction { get; }
 
-        // Optional, it returns (PrimaryAction | SecondaryAction) by default.
-        // Probably determines what actions to show as hints? Experiment!
-        public override UseActionEnum SupportedActions { get; } = UseActionEnum.Manipulate
-                                                                | UseActionEnum.Close
-                                                                | UseActionEnum.BuildPlanner
-                                                                | UseActionEnum.OpenInventory
-                                                                | UseActionEnum.OpenTerminal
-                                                                | UseActionEnum.PickUp
-                                                                | UseActionEnum.UseFinished; // makes Use() get called on releasing input
+        public override UseActionEnum SupportedActions { get; }
 
         public Example_CustomUseObject(IMyEntity owner, string dummyName, IMyModelDummy dummyData, uint shapeKey) : base(owner, dummyData)
         {
             // This class gets instanced per entity and also per detector dummy.
             // WARNING: this exact constructor signature is required, otherwise it throws errors mid-loading which prevents the world from loading.
+
+            // affects how this useobject behaves, see comments:
+            SupportedActions |= UseActionEnum.Manipulate;
+            SupportedActions |= UseActionEnum.OpenInventory; // overrides the inventory hotkey to invoke Use() instead. remove flag to allow the game to open inventory as normal.
+            SupportedActions |= UseActionEnum.OpenTerminal; // overrides the terminal hotkey to invoke Use() instead. remove flag to allow the game to open terminal as normal.
+            SupportedActions |= UseActionEnum.BuildPlanner; // if present, the game allows build planner bind (MMB) on this useobject. neither option will trigger Use()!
+            SupportedActions |= UseActionEnum.Deposit; // same as above but for deposit (alt+MMB).
+            SupportedActions |= UseActionEnum.PickUp; // 
+            SupportedActions |= UseActionEnum.Close; // calls Use() when aiming away from the useobject, not recommended because there's a dedicated method for that
+            SupportedActions |= UseActionEnum.UseFinished; // makes Use() get called on releasing input
         }
 
         public override MyActionDescription GetActionInfo(UseActionEnum actionEnum)
@@ -93,6 +96,16 @@ namespace Digi.Examples
             }
         }
 
-        // there's a few more things you can optionally override, like OnSelectionLost(), ContinuousUsage, PlayIndicatorSound, etc.
+        // there's a few more things you can optionally override, like HandleInput(), OnSelectionLost(), ContinuousUsage, PlayIndicatorSound, etc.
+
+        //public override bool HandleInput()
+        //{
+        //    if(!MyParticlesManager.Paused)
+        //        MyAPIGateway.Utilities.ShowNotification("HandleInput()", 17);
+        //
+        //    // careful returning true as it will block A LOT of things including equipped tool click, helmet, flashlight, etc - but not everything, so test throughly.
+        //    // this is probably intended to always be returning false and only return true when you have your control detected so that it doesn't do multiple actions.
+        //    return false;
+        //}
     }
 }
