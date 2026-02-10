@@ -8,10 +8,13 @@ using VRage.Utils;
 
 namespace Digi.Examples
 {
-    // This example is minimal code required for it to work and with comments so you can better understand what is going on.
+    // This example is minimal code required for a server-side per-world config to work.
 
-    // The gist of it is: ini file is loaded/created that admin can edit, SetVariable is used to store that data in sandbox.sbc which gets automatically sent to joining clients.
-    // Benefit of this is clients will be getting this data before they join, very good if you need it during LoadData()
+    // The gist of it is: ini file is loaded/created (in <WorldFolder>/Storage/<ModId>.sbm_<ScriptsFolderName>/Config.ini specifically) that admin can edit,
+    //   then SetVariable is used to store that data in sandbox.sbc which gets automatically sent to joining clients.
+    // The reason for SetVariable() is that clients will reliably get the config data as they join which will be available during LoadData() for you to use.
+    // Users should be editing that Config.ini, not the sandbox.sbc!
+
     // This example does not support reloading config while server runs, you can however implement that by sending a packet to all online players with the ini data for them to parse.
 
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
@@ -40,6 +43,11 @@ namespace Digi.Examples
         public bool ToggleThings = true;
 
         IMyModContext Mod;
+
+        /// <summary>
+        /// Only for informing humans!
+        /// </summary>
+        string ConfigRelativePath = $@"<World>\Storage\{MyAPIGateway.Utilities.GamePaths.ModScopeName}\{FileName}";
 
         void LoadConfig(MyIni iniParser)
         {
@@ -76,8 +84,8 @@ namespace Digi.Examples
 
         void LoadOnHost()
         {
-            // HACK: Fix for files created in game's CustomWorlds folder when world is created with this mod present.
-            // bugreport: https://support.keenswh.com/spaceengineers/pc/topic/47762-modapi-write-to-world-storage-can-write-to-game-folder
+            #region HACK: Fix for files created in game's CustomWorlds folder when world is created with this mod present.
+            // HACK fix for bug: https://support.keenswh.com/spaceengineers/pc/topic/47762-modapi-write-to-world-storage-can-write-to-game-folder
             string savePath = MyAPIGateway.Session?.CurrentPath;
             string gamePath = MyAPIGateway.Utilities?.GamePaths?.ContentPath;
             if(savePath == null || gamePath == null || savePath.StartsWith(MyAPIGateway.Utilities.GamePaths.ContentPath))
@@ -86,6 +94,7 @@ namespace Digi.Examples
                 MyAPIGateway.Utilities.InvokeOnGameThread(LoadOnHost);
                 return;
             }
+            #endregion
 
             MyIni iniParser = new MyIni();
 
@@ -107,23 +116,40 @@ namespace Digi.Examples
             }
 
             iniParser.Clear(); // remove any existing settings that might no longer exist
-
             SaveConfig(iniParser);
+            string configText = iniParser.ToString();
+            string configTextForSBC = ";This is not supposed to be edited here in sandbox.sbc! Edit " + ConfigRelativePath + " instead.\n" + configText;
 
-            string saveText = iniParser.ToString();
+            // sanity tests, can comment them out after ensuring they're fine
+            CheckIni(iniParser, configText, nameof(configText));
+            CheckIni(iniParser, configTextForSBC, nameof(configTextForSBC));
 
-            MyAPIGateway.Utilities.SetVariable<string>(VariableId, saveText);
+            MyAPIGateway.Utilities.SetVariable<string>(VariableId, configTextForSBC);
 
             using(TextWriter file = MyAPIGateway.Utilities.WriteFileInWorldStorage(FileName, typeof(ExampleSettings)))
             {
-                file.Write(saveText);
+                file.Write(configText);
             }
 
-            Log("World config created/updated.");
+            // as seen inside *InWorldStorage() methods.
+            Log("World config created/updated: " + ConfigRelativePath);
+        }
+
+        void CheckIni(MyIni iniParser, string ini, string nameForLog)
+        {
+            iniParser.Clear();
+
+            MyIniParseResult result;
+            if(!iniParser.TryParse(ini, out result))
+                throw new Exception($"Failed to parse {nameForLog}! result: {result}; ini data:\n{ini}");
+
+            Log($"Checking {nameForLog} ini data... all good!");
         }
 
         void LoadOnClient()
         {
+            // Note: if you add this on an existing mod, it will throw this error for players that join servers which haven't been restarted yet,
+            //       because players will have the latest mod while server does not, therefore the received sandbox data will not have the config data.
             string text;
             if(!MyAPIGateway.Utilities.GetVariable<string>(VariableId, out text))
                 throw new Exception("No config found in sandbox.sbc!");
