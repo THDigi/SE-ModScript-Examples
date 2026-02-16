@@ -116,7 +116,7 @@ namespace Digi.Examples
         public override bool IsSerialized()
         {
             // executed when the entity gets serialized (saved, blueprinted, streamed, etc) and asks all
-            //   its components whether to be serialized too or not (calling GetObjectBuilder())
+            //   its components whether to be serialized too or not (calling Serialize())
 
             // this can be used for serializing to Storage dictionary for example,
             //   and for reliability I recommend that Storage has at least one key in it before this runs (by adding yours in first update).
@@ -138,5 +138,7 @@ namespace Digi.Examples
         //   but it does not override those 2 methods to pass their call along to the held components.
         //
         // Also advised to not use OnAddedToContainer() and OnBeforeRemovedFromContainer()
+        //
+        // The override for GetObjectBuilder() is practically never called, Serialize() and Deserialize() are (see IsSerialized()).
     }
 }
