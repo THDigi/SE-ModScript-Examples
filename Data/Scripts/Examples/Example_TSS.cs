@@ -72,7 +72,7 @@ namespace Digi.Examples
             var frame = Surface.DrawFrame();
 
             // Drawing sprites works exactly like in PB API.
-            // Therefore this guide applies: https://github.com/malware-dev/MDK-SE/wiki/Text-Panels-and-Drawing-Sprites
+            // Therefore this guide applies: https://spaceengineers.wiki.gg/wiki/Scripting/Text_Panels_and_Drawing_Sprites
 
             // there are also some helper methods from the MyTSSCommon that this extends.
             // like: AddBackground(frame, Surface.ScriptBackgroundColor); - a grid-textured background
