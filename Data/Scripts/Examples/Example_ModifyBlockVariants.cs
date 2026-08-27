@@ -132,7 +132,7 @@ namespace Digi.Experiments
                         Instance.RemoveBlocks.Remove(blockDef.Id);
 
                         // detach block from group properly
-                        blockDef.BlockStages = null;
+                        blockDef.BlockStages = null; // this is marked obsolete but the game still uses it in the GUI code and it's assigned by the BlockVariantGroups definition.
                         blockDef.BlockVariantsGroup = null;
                         blockDef.GuiVisible = true; // this was assigned by the group so we have to reset it
 
