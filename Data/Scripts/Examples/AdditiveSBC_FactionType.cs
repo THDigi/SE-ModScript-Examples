@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Sandbox.Definitions;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.ObjectBuilders;
@@ -15,6 +16,12 @@ namespace Digi.Examples // change to have your name and the mod name, to be iden
         public override void LoadData()
         {
             // This script allows you to add or remove items and grids from FactionType definitions.
+            // Originally you had to edit the script like shown below to configure it, but it was made simpler where the
+            //   script loads the Data\EditFactionTypes.txt, see the example in this repository!
+            LoadTextFile();
+
+#if false // turn this true if you wish the below to function, but not recommended, use the aformentioned text file.
+
             // Example usage below, change the subtype if needed, then call the methods shown inside.
             // Duplicate the entire chunk to edit more subtypes.
 
@@ -36,9 +43,71 @@ namespace Digi.Examples // change to have your name and the mod name, to be iden
             }
 
             //...
+#endif
         }
 
         // do not edit below this point unless you absolutely understand what you are doing
+
+        void LoadTextFile()
+        {
+            const string FilePath = @"Data\EditFactionTypes.txt";
+
+            if(!MyAPIGateway.Utilities.FileExistsInModLocation(FilePath, ModContext.ModItem))
+            {
+                Log(FilePath, "File not found!", TErrorSeverity.Error);
+                return;
+            }
+
+            char[] SplitBy = new char[] { ':' };
+            EditFactionType edit = null;
+
+            using(var reader = MyAPIGateway.Utilities.ReadFileInModLocation(FilePath, ModContext.ModItem))
+            {
+                string line;
+                while((line = reader.ReadLine()) != null)
+                {
+                    if(string.IsNullOrWhiteSpace(line) || line.StartsWith("//"))
+                        continue;
+
+                    string[] data = line.Split(SplitBy, 2);
+
+                    if(data.Length != 2)
+                    {
+                        Log(FilePath, $"Unexpected line '{line}', ignored.", TErrorSeverity.Warning);
+                        continue;
+                    }
+
+                    string key = data[0].Trim();
+                    string value = data[1].Trim();
+
+                    switch(key.ToLowerInvariant())
+                    {
+                        case "factiontype":
+                            edit?.Dispose(); // submit previous factiontype edit, if any
+                            edit = new EditFactionType(this, value);
+                            break;
+                        case "+offer": edit.OffersList_Add(value); break;
+                        case "-offer": edit.OffersList_Remove(value); break;
+                        case "+order": edit.OrdersList_Add(value); break;
+                        case "-order": edit.OrdersList_Remove(value); break;
+                        case "+ship": edit.GridsForSale_Add(value); break;
+                        case "-ship": edit.GridsForSale_Remove(value); break;
+                        default:
+                            Log(FilePath, $"Unknown key '{key}', ignored.", TErrorSeverity.Warning);
+                            break;
+                    }
+                }
+            }
+
+            edit?.Dispose(); // submit the last factiontype edit
+        }
+
+        void Log(string file, string message, TErrorSeverity severity)
+        {
+            var context = new MyModContext();
+            context.Init(ModContext.ModName, file, ModContext.ModPath);
+            MyDefinitionErrors.Add(context, message, severity, writeToLog: true);
+        }
 
         protected override void UnloadData()
         {
