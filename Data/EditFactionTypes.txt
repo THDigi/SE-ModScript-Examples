@@ -1,0 +1,17 @@
+﻿// This file is processed by the AdditiveSBC_FactionType.cs script in this mod.
+// Empty lines and lines starting with // are ignored.
+
+FactionType: Builder
++Offer: ConsumableItem/RadiationKit
++Offer: Component/YourCustomComponent
+
+-Offer: Datapad/Datapad
+-Offer: Component/ZoneChip
+
++Ship: Cargo Shuttle
+//-Ship: ...
+
+FactionType: Miner
+// Same as example above
+
+// and more FactionType if needed
