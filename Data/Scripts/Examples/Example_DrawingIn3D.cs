@@ -1,20 +1,19 @@
-﻿using System;
-using Sandbox.Game;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Utils;
 using VRageMath;
-using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum; // required for MyTransparentGeometry/MySimpleObjectDraw to be able to set blend type.
+using static VRageRender.MyBillboard; // for the BlendTypeEnum to be shorter, not required
 
 namespace Digi.Examples
 {
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     public class Example_DrawingIn3D : MySessionComponentBase
     {
-        // material subtype from transparent material SBC.
-        // go-to general purpose materials: Square, WhiteDot, WeaponLaser.
-        private MyStringId Material = MyStringId.GetOrCompute("Square");
+        // commonly useful materials
+        MyStringId MaterialSolid = MyStringId.GetOrCompute("Square"); // subtypeId from transparent materials SBC
+        MyStringId MaterialCircle = MyStringId.GetOrCompute("WhiteDot");
+        MyStringId MaterialLaser = MyStringId.GetOrCompute("WeaponLaser");
 
         public override void Draw()
         {
@@ -40,6 +39,7 @@ namespace Digi.Examples
             Vector3 direction = (target - start); // not normalized can work too if you give 1 to the line length
             float lineLength = 1f;
             float lineThickness = 0.05f;
+            float dotRadius = lineThickness * 3;
 
             // How the billboard interacts with world/lighting. What each value does:
             //   Standard - regular, affected by tonemapping and post-processing.
@@ -50,13 +50,17 @@ namespace Digi.Examples
             BlendTypeEnum blendType = BlendTypeEnum.Standard;
 
             // all billboard methods accessible right now only live one tick
-            MyTransparentGeometry.AddLineBillboard(Material, color, start, direction, lineLength, lineThickness, blendType);
+
+            // a line with dots at each end
+            MyTransparentGeometry.AddLineBillboard(MaterialSolid, color, start, direction, lineLength, lineThickness, blendType);
+            MyTransparentGeometry.AddPointBillboard(MaterialCircle, color, start, dotRadius, 0f, blendType: blendType);
+            MyTransparentGeometry.AddPointBillboard(MaterialCircle, color, start + direction, dotRadius, 0f, blendType: blendType);
 
             // glowling line example (requires post processing to see the bloom)
-            MyTransparentGeometry.AddLineBillboard(Material, Color.White.ToVector4() * 100, Vector3D.Zero + Vector3.Forward * 1, Vector3.Forward, 10f, 0.05f, BlendTypeEnum.Standard);
+            MyTransparentGeometry.AddLineBillboard(MaterialSolid, Color.White.ToVector4() * 100, Vector3D.Zero + Vector3.Forward * 1, Vector3.Forward, 10f, 0.05f, BlendTypeEnum.Standard);
 
             // fake "glowing" line example (no post processing required)
-            MyTransparentGeometry.AddLineBillboard(MyStringId.GetOrCompute("WeaponLaser"), Color.White.ToVector4(), Vector3D.Zero + Vector3.Backward * 1, Vector3.Backward, 10f, 0.3f, BlendTypeEnum.SDR);
+            MyTransparentGeometry.AddLineBillboard(MaterialLaser, Color.White.ToVector4(), Vector3D.Zero + Vector3.Backward * 1, Vector3.Backward, 10f, 0.3f, BlendTypeEnum.SDR);
         }
 
         void CylinderExample()
@@ -75,7 +79,7 @@ namespace Digi.Examples
             bool wireframe = true; // DrawTransparentCylinder() only has wireframe internally so this is a pointless param
             float wireframeThickness = 0.05f;
 
-            MySimpleObjectDraw.DrawTransparentCylinder(ref matrix, baseRadius, topRadius, height, ref color, wireframe, wireDivRatio, wireframeThickness, Material);
+            MySimpleObjectDraw.DrawTransparentCylinder(ref matrix, baseRadius, topRadius, height, ref color, wireframe, wireDivRatio, wireframeThickness, MaterialSolid);
         }
     }
 }
