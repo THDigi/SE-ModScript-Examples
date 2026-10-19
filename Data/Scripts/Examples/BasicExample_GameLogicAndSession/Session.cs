@@ -5,8 +5,8 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
+using VRage.Game.ModAPI;
 using VRage.Utils;
-using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum; // required for MyTransparentGeometry/MySimpleObjectDraw to be able to set blend type.
 
 namespace Digi.Examples
 {
@@ -25,18 +25,36 @@ namespace Digi.Examples
 
         public override void LoadData()
         {
-            // amogst the earliest execution points, but not everything is available at this point.
+            // HIGHLY recommended to use this try-catch to properly crash the game,
+            //   because the game will eat the exceptions and kick user to main menum,
+            //   the issue is it won't call mods' UnloadData(), causing all sorts of new bugs.
+            try
+            {
+                Instance = this;
 
-            // These can be used anywhere, not just in this method/class:
-            // MyAPIGateway. - main entry point for the API
-            // MyDefinitionManager.Static. - reading/editing definitions
-            // MyGamePruningStructure. - fast way of finding entities in an area
-            // MyTransparentGeometry. and MySimpleObjectDraw. - to draw sprites (from TransparentMaterials.sbc) in world (they usually live a single tick)
-            // MyVisualScriptLogicProvider. - mainly designed for VST but has its uses, use as a last resort.
-            // System.Diagnostics.Stopwatch - for measuring code execution time.
-            // ...and many more things, ask in #programming-modding in keen's discord for what you want to do to be pointed at the available things to use.
+                // amogst the earliest execution points, but not everything is available at this point.
 
-            Instance = this;
+                // These can be used anywhere, not just in this method/class:
+                // MyAPIGateway. - main entry point for the API
+                // MyDefinitionManager.Static. - reading/editing definitions
+                // MyGamePruningStructure. - fast way of finding entities in an area
+                // MyTransparentGeometry. and MySimpleObjectDraw. - to draw sprites (from TransparentMaterials.sbc) in world (they usually live a single tick)
+                // MyVisualScriptLogicProvider. - mainly designed for VST but has its uses, use as a last resort.
+                // System.Diagnostics.Stopwatch - for measuring code execution time.
+                // ...and many more things, ask in #programming-modding in keen's discord for what you want to do to be pointed at the available things to use.
+            }
+            catch(Exception e)
+            {
+                // delayed crash so that it actually crashes the game.
+                // because errors in LoadData() will be eaten and kicks player to main menu,
+                //   problem there is it doesn't call mods' UnloadData(), causing new issues in next worlds.
+
+                MyLog.Default.Error(e.ToString()); // just in case
+                MyAPIGateway.Utilities.InvokeOnGameThread(() =>
+                {
+                    throw new ModCrashedException(e, ModContext); // this special exception shows a different crash window that pinpoints the mod name and ID
+                });
+            }
         }
 
         public override void BeforeStart()
@@ -46,7 +64,8 @@ namespace Digi.Examples
 
         protected override void UnloadData()
         {
-            // always catch errors here because throwing them will NOT crash the game and instead prevent other mods from unloading properly, causing all sorts of hidden issues...
+            // HIGHLY recommended to always catch errors here because the game will catch them anyway
+            //   and consequently will prevent other mods' UnloadData() from triggering when that happens.
             try
             {
                 // executed when world is exited to unregister events and stuff.
